@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wambe
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - wambe-postgres:/var/lib/postgresql/data
+      - ./infra/local/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wambe"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: services/wambe-api/Dockerfile
+    profiles: ["app"]
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DATABASE_URL: jdbc:postgresql://postgres:5432/wambe
+      DATABASE_USER: wambe_api
+      DATABASE_PASSWORD: wambe_local
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: postgres
+      SUPABASE_JWKS_URI: http://host.docker.internal:9999/.well-known/jwks.json
+      STORAGE_TYPE: local
+      LOCAL_STORAGE_ROOT: /var/lib/wambe/storage
+      SCANNER_URL: http://media-scanner:8081
+      SCANNER_HMAC_SECRET: local-scanner-secret-change-me
+      API_BASE_URL: http://api:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - wambe-storage:/var/lib/wambe/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  media-scanner:
+    build:
+      context: .
+      dockerfile: services/media-scanner/Dockerfile
+    profiles: ["app"]
+    environment:
+      PORT: 8081
+      SCANNER_HMAC_SECRET: local-scanner-secret-change-me
+    ports:
+      - "8081:8081"
+
+volumes:
+  wambe-postgres:
+  wambe-storage:

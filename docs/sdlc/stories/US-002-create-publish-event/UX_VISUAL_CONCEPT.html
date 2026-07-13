@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wambe premium responsive visual concept</title>
+  <style>
+    :root {
+      --canvas: #f6f0e8;
+      --surface: #fffdf9;
+      --surface-soft: #f0e8dd;
+      --ink: #211b18;
+      --muted: #6e635d;
+      --line: #ded3c7;
+      --coral: #b84639;
+      --coral-dark: #94372f;
+      --coral-soft: #f9e4df;
+      --gold: #c39342;
+      --green: #1f7853;
+      --whatsapp: #167b4e;
+      --danger: #a53c38;
+      --shadow-sm: 0 4px 16px rgb(55 37 25 / 7%);
+      --shadow-md: 0 22px 60px rgb(55 37 25 / 14%);
+      --radius-sm: 12px;
+      --radius-md: 20px;
+      --radius-lg: 30px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    :focus-visible {
+      outline: 3px solid var(--coral);
+      outline-offset: 3px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3, .wordmark {
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    h1 {
+      max-width: 850px;
+      margin-bottom: 16px;
+      font-size: clamp(42px, 7vw, 88px);
+      font-weight: 500;
+      letter-spacing: -.045em;
+      line-height: .98;
+    }
+
+    h2 { font-size: clamp(30px, 4vw, 48px); font-weight: 500; letter-spacing: -.03em; line-height: 1.05; }
+    h3 { font-size: 24px; font-weight: 500; letter-spacing: -.02em; }
+
+    .eyebrow {
+      margin-bottom: 10px;
+      color: var(--coral);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+
+    .concept-header {
+      position: relative;
+      min-height: 620px;
+      overflow: hidden;
+      padding: 28px clamp(20px, 5vw, 72px) 70px;
+      background:
+        radial-gradient(circle at 80% 18%, rgb(195 147 66 / 28%), transparent 22rem),
+        radial-gradient(circle at 5% 90%, rgb(184 70 57 / 17%), transparent 24rem),
+        var(--surface);
+    }
+
+    .concept-header::after {
+      position: absolute;
+      top: -80px;
+      right: -70px;
+      width: 430px;
+      height: 430px;
+      border: 1px solid rgb(184 70 57 / 20%);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 34px rgb(184 70 57 / 4%),
+        0 0 0 68px rgb(195 147 66 / 5%);
+      content: "";
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      max-width: 1440px;
+      margin: 0 auto;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .wordmark { font-size: 32px; font-weight: 700; }
+    .concept-pill {
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgb(255 253 249 / 72%);
+      font-size: 12px;
+      font-weight: 700;
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      position: relative;
+      z-index: 1;
+      max-width: 1440px;
+      margin: 110px auto 0;
+    }
+
+    .hero-copy {
+      max-width: 720px;
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 20px);
+    }
+
+    .hero-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .chip {
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 84px clamp(20px, 5vw, 72px);
+    }
+
+    .section-intro {
+      display: flex;
+      max-width: 1100px;
+      margin-bottom: 36px;
+      align-items: end;
+      justify-content: space-between;
+      gap: 28px;
+    }
+
+    .section-intro > p { max-width: 520px; margin-bottom: 6px; }
+
+    .token-strip {
+      display: grid;
+      grid-template-columns: 1.35fr repeat(4, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .token {
+      min-height: 150px;
+      padding: 22px;
+      border-right: 1px solid var(--line);
+    }
+
+    .token:last-child { border-right: 0; }
+    .swatch { width: 42px; height: 42px; margin-bottom: 24px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 8%); }
+
+    .app-window {
+      overflow: hidden;
+      border: 1px solid #d0c2b5;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+    }
+
+    .window-bar {
+      display: flex;
+      height: 44px;
+      padding: 0 18px;
+      align-items: center;
+      gap: 7px;
+      border-bottom: 1px solid var(--line);
+      background: #f1ebe3;
+    }
+
+    .window-dot { width: 9px; height: 9px; border-radius: 50%; background: #c6b8aa; }
+    .app-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 780px; }
+
+    .sidebar {
+      display: flex;
+      padding: 28px 22px;
+      border-right: 1px solid var(--line);
+      background: #fbf7f1;
+      flex-direction: column;
+    }
+
+    .side-label { margin-top: 38px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .side-link { margin-top: 10px; padding: 12px 13px; border-radius: 11px; font-size: 14px; font-weight: 700; }
+    .side-link.active { color: var(--coral-dark); background: var(--coral-soft); }
+    .profile { display: flex; margin-top: auto; align-items: center; gap: 10px; }
+    .avatar { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; color: #fff; background: var(--coral); font-weight: 800; }
+
+    .workspace { min-width: 0; padding: 36px clamp(24px, 4vw, 56px) 46px; }
+    .workspace-top { display: flex; align-items: start; justify-content: space-between; gap: 24px; }
+    .workspace-top h2 { margin-bottom: 8px; font-size: clamp(32px, 4vw, 46px); }
+
+    .save-status {
+      display: flex;
+      padding: 8px 12px;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      color: var(--green);
+      background: #e7f2ec;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 30px 0 38px;
+    }
+
+    .step {
+      padding: 10px 5px;
+      border-bottom: 3px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .step.done { border-color: var(--gold); color: var(--ink); }
+    .step.current { border-color: var(--coral); color: var(--coral-dark); }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 650px) minmax(280px, 1fr);
+      gap: clamp(28px, 4vw, 58px);
+      align-items: start;
+    }
+
+    .task-head { display: flex; margin-bottom: 24px; justify-content: space-between; gap: 18px; }
+    .task-head h3 { margin-bottom: 6px; font-size: 30px; }
+    .skip { color: var(--coral-dark); font-size: 13px; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
+
+    .upload-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; }
+    .upload {
+      min-height: 160px;
+      padding: 25px;
+      border: 1.5px dashed #cdbdaf;
+      border-radius: var(--radius-md);
+      background: #fcf8f3;
+    }
+
+    .upload.featured {
+      position: relative;
+      overflow: hidden;
+      border-style: solid;
+      border-color: #e6c7bd;
+      background:
+        linear-gradient(120deg, rgb(184 70 57 / 12%), transparent 50%),
+        #fcf8f3;
+    }
+
+    .upload-icon { display: grid; width: 44px; height: 44px; margin-bottom: 32px; place-items: center; border-radius: 13px; color: var(--coral-dark); background: var(--coral-soft); font-size: 22px; }
+    .upload strong, .upload span { display: block; }
+    .upload span { margin-top: 5px; color: var(--muted); font-size: 12px; }
+
+    .field { margin-top: 22px; }
+    label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 800; }
+
+    .textarea {
+      min-height: 106px;
+      padding: 15px 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      box-shadow: inset 0 1px 2px rgb(0 0 0 / 2%);
+    }
+
+    .file {
+      display: flex;
+      margin-top: 14px;
+      padding: 13px 14px;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+    }
+
+    .file-mark { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; color: var(--green); background: #e7f2ec; font-weight: 900; }
+
+    .actions { display: flex; margin-top: 28px; justify-content: space-between; gap: 12px; }
+    .button { min-height: 48px; padding: 12px 20px; border: 1px solid var(--line); border-radius: 13px; color: var(--ink); background: #fff; font-weight: 800; }
+    .button.primary { border-color: var(--coral); color: #fff; background: var(--coral); box-shadow: 0 8px 20px rgb(184 70 57 / 22%); }
+    .button.primary:hover { background: var(--coral-dark); }
+    .button.whatsapp { border-color: var(--whatsapp); color: #fff; background: var(--whatsapp); }
+
+    .preview-wrap { position: sticky; top: 24px; }
+    .preview-label { display: flex; margin-bottom: 12px; align-items: center; justify-content: space-between; }
+    .preview-label span { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .invite-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 26px;
+      color: #fffaf4;
+      background:
+        radial-gradient(circle at 86% 10%, rgb(246 205 135 / 55%), transparent 28%),
+        linear-gradient(145deg, #461f22, #8e3e38 52%, #c27c4a);
+      box-shadow: 0 24px 48px rgb(72 34 30 / 24%);
+    }
+
+    .invite-card::before,
+    .invite-card::after {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border: 1px solid rgb(255 239 205 / 27%);
+      transform: rotate(45deg);
+      content: "";
+    }
+
+    .invite-card::before { top: -90px; right: -55px; }
+    .invite-card::after { bottom: -110px; left: -75px; }
+    .invite-art { position: relative; min-height: 250px; padding: 36px 30px; text-align: center; }
+    .invite-art .mono { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+    .invite-names { margin: 38px 0 12px; font-family: Georgia, serif; font-size: clamp(34px, 4vw, 48px); font-style: italic; line-height: 1; }
+    .invite-details { position: relative; padding: 22px 24px; background: rgb(42 19 19 / 32%); backdrop-filter: blur(8px); }
+    .invite-details p { margin-bottom: 4px; }
+
+    .concept-row {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .auth-card, .success-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 580px;
+      padding: clamp(28px, 5vw, 58px);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+    }
+
+    .auth-card {
+      background:
+        linear-gradient(180deg, transparent 58%, rgb(184 70 57 / 7%)),
+        var(--surface);
+    }
+
+    .auth-card::after {
+      position: absolute;
+      right: -80px;
+      bottom: -120px;
+      width: 330px;
+      height: 330px;
+      border: 55px double rgb(195 147 66 / 13%);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .auth-content { position: relative; z-index: 1; max-width: 430px; }
+    .auth-content h2 { margin-top: 120px; }
+    .auth-actions { display: grid; gap: 12px; margin-top: 30px; }
+    .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; }
+    .or::before, .or::after { height: 1px; background: var(--line); content: ""; flex: 1; }
+    .input { min-height: 50px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 13px; color: var(--muted); background: #fff; }
+
+    .success-card {
+      display: grid;
+      place-items: center;
+      color: #fffaf4;
+      background:
+        radial-gradient(circle at 20% 20%, rgb(246 205 135 / 28%), transparent 24rem),
+        linear-gradient(145deg, #351a1e, #78332f);
+      text-align: center;
+    }
+
+    .success-content { position: relative; z-index: 1; max-width: 460px; }
+    .success-mark { display: grid; width: 78px; height: 78px; margin: 0 auto 28px; place-items: center; border: 1px solid rgb(255 255 255 / 34%); border-radius: 50%; background: rgb(255 255 255 / 12%); font-size: 32px; }
+    .success-card .eyebrow { color: #edc77f; }
+    .success-link { margin: 26px 0 14px; padding: 13px; border: 1px solid rgb(255 255 255 / 22%); border-radius: 13px; background: rgb(255 255 255 / 8%); font-size: 12px; }
+
+    .footer { padding: 34px 20px; color: var(--muted); text-align: center; font-size: 12px; }
+
+    @media (max-width: 1023px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .workspace { max-width: 760px; margin: 0 auto; }
+      .editor-grid { grid-template-columns: 1fr; }
+      .preview-wrap { position: static; max-width: 480px; margin-top: 20px; }
+      .concept-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 767px) {
+      .concept-header { min-height: 560px; }
+      .hero { margin-top: 100px; }
+      .section { padding-top: 62px; padding-bottom: 62px; }
+      .section-intro { display: block; }
+      .token-strip { grid-template-columns: 1fr 1fr; }
+      .token { min-height: 125px; border-bottom: 1px solid var(--line); }
+      .token:first-child { grid-column: 1 / -1; }
+      .workspace { padding: 24px 18px 30px; }
+      .workspace-top { align-items: center; }
+      .workspace-top h2 { font-size: 34px; }
+      .steps { display: block; margin: 22px 0 30px; }
+      .step { display: none; }
+      .step.current { display: block; padding: 9px 0; }
+      .upload-grid { grid-template-columns: 1fr; }
+      .preview-wrap { order: 2; }
+      .actions { position: sticky; bottom: 0; margin: 28px -18px -30px; padding: 14px 18px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgb(255 253 249 / 94%); backdrop-filter: blur(12px); }
+      .button { flex: 1; }
+      .auth-card, .success-card { min-height: 540px; border-radius: var(--radius-md); }
+    }
+
+    @media (max-width: 420px) {
+      .token-strip { grid-template-columns: 1fr; }
+      .token:first-child { grid-column: auto; }
+      .workspace-top h2 { font-size: 30px; }
+      .save-status { padding: 7px 9px; }
+      .invite-art { min-height: 220px; padding: 28px 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+
+    @media (forced-colors: active) {
+      .button, .upload, .invite-card, .auth-card, .success-card { border: 1px solid CanvasText; }
+    }
+  </style>
+</head>
+<body>
+  <header class="concept-header">
+    <div class="topbar">
+      <div class="wordmark">Wambe</div>
+      <div class="concept-pill">Visual concept · Responsive</div>
+    </div>
+    <div class="hero">
+      <p class="eyebrow">Premium editorial direction</p>
+      <h1>Joyful enough to share. Calm enough to create.</h1>
+      <p class="hero-copy">A warmer, more polished expression of the approved UX—built around Nigerian celebration details, editorial typography, confident spacing and one clear action at a time.</p>
+      <div class="hero-chips">
+        <span class="chip">Mobile-first</span>
+        <span class="chip">Desktop responsive</span>
+        <span class="chip">WCAG 2.2 AA intent</span>
+        <span class="chip">WhatsApp share-first</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="section-intro">
+        <div><p class="eyebrow">Design language</p><h2>Warm restraint, not generic SaaS.</h2></div>
+        <p class="muted">Ivory surfaces, deep ink, coral action and restrained gold create celebration energy without competing with invitation artwork.</p>
+      </div>
+      <div class="token-strip">
+        <div class="token"><p class="eyebrow">Typography</p><h3 style="font-size:34px">A celebration<br>with presence.</h3><p class="muted small">Editorial serif + legible UI sans</p></div>
+        <div class="token"><div class="swatch" style="background:#211b18"></div><strong>Deep ink</strong><p class="muted small">Primary text</p></div>
+        <div class="token"><div class="swatch" style="background:#b84639"></div><strong>Wambe coral</strong><p class="muted small">Primary action</p></div>
+        <div class="token"><div class="swatch" style="background:#c39342"></div><strong>Celebration gold</strong><p class="muted small">Restrained accent</p></div>
+        <div class="token"><div class="swatch" style="background:#fffdf9"></div><strong>Warm ivory</strong><p class="muted small">Calm surfaces</p></div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:20px">
+      <div class="section-intro">
+        <div><p class="eyebrow">Responsive editor</p><h2>One flow, composed for every screen.</h2></div>
+        <p class="muted">Desktop adds navigation and a sticky guest preview. Tablet and mobile preserve the four steps, stack the preview and keep actions within reach.</p>
+      </div>
+
+      <article class="app-window" aria-label="Responsive Wambe editor visual concept">
+        <div class="window-bar"><span class="window-dot"></span><span class="window-dot"></span><span class="window-dot"></span></div>
+        <div class="app-shell">
+          <aside class="sidebar">
+            <div class="wordmark">Wambe</div>
+            <p class="side-label">Host workspace</p>
+            <div class="side-link">Overview</div>
+            <div class="side-link active">Create event</div>
+            <div class="side-link">My Wambes</div>
+            <div class="side-link">Media</div>
+            <div class="profile"><div class="avatar">AJ</div><div><strong class="small">Amina Jubril</strong><div class="muted small">Host</div></div></div>
+          </aside>
+
+          <div class="workspace">
+            <div class="workspace-top">
+              <div><p class="eyebrow">Create your Wambe</p><h2>Invitation & style</h2><p class="muted small">Step 3 of 4 · Optional</p></div>
+              <div class="save-status"><span>✓</span> Saved</div>
+            </div>
+
+            <div class="steps" aria-label="Step 3 of 4">
+              <div class="step done">1&nbsp; Basics</div>
+              <div class="step done">2&nbsp; Venue</div>
+              <div class="step current">3&nbsp; Invitation & style</div>
+              <div class="step">4&nbsp; Privacy</div>
+            </div>
+
+            <div class="editor-grid">
+              <div>
+                <div class="task-head">
+                  <div><h3>Make it feel like yours.</h3><p class="muted small">Add the details guests will remember.</p></div>
+                  <button class="skip">Skip for now</button>
+                </div>
+
+                <div class="upload-grid">
+                  <button class="upload featured">
+                    <span class="upload-icon">＋</span>
+                    <strong>Add invitation</strong>
+                    <span>JPG, PNG, WebP or PDF · up to 10 MB</span>
+                  </button>
+                  <button class="upload">
+                    <span class="upload-icon">✦</span>
+                    <strong>Add Aso-Ebi</strong>
+                    <span>Fabric or style images</span>
+                  </button>
+                </div>
+
+                <div class="file">
+                  <div class="file-mark">✓</div>
+                  <div><strong class="small">amina-tunde-invitation.pdf</strong><div class="muted small">2.8 MB · Scanned and ready</div></div>
+                </div>
+
+                <div class="field">
+                  <label>Dress-code or Aso-Ebi notes <span class="muted">(optional)</span></label>
+                  <div class="textarea">Emerald green and champagne gold. Traditional attire is warmly encouraged.</div>
+                </div>
+
+                <div class="actions">
+                  <button class="button">Back</button>
+                  <button class="button primary">Continue to privacy</button>
+                </div>
+              </div>
+
+              <aside class="preview-wrap">
+                <div class="preview-label"><strong class="small">Guest preview</strong><span>Updates as you create</span></div>
+                <div class="invite-card">
+                  <div class="invite-art">
+                    <div class="mono">Together with their families</div>
+                    <div class="invite-names">Amina<br>&amp; Tunde</div>
+                    <div class="mono">Invite you to celebrate</div>
+                  </div>
+                  <div class="invite-details">
+                    <p><strong>24 October 2026 · 2:00 PM</strong></p>
+                    <p class="small">Civic Centre · Victoria Island, Lagos</p>
+                  </div>
+                </div>
+                <p class="muted small" style="margin-top:14px">Illustrative host preview. The guest event page is delivered in a later story.</p>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section">
+      <div class="section-intro">
+        <div><p class="eyebrow">Key moments</p><h2>Entry that feels easy. Success that feels earned.</h2></div>
+        <p class="muted">Authentication stays calm and familiar. Publication celebrates briefly, then immediately prioritizes sharing.</p>
+      </div>
+
+      <div class="concept-row">
+        <article class="auth-card" aria-label="Authentication visual concept">
+          <div class="auth-content">
+            <div class="wordmark">Wambe</div>
+            <h2>Create and share in minutes.</h2>
+            <p class="muted">Bring your invitation, venue and dress code together in one beautiful link.</p>
+            <div class="auth-actions">
+              <button class="button">G&nbsp;&nbsp; Continue with Google</button>
+              <div class="or">or</div>
+              <div class="input">Email address</div>
+              <button class="button primary">Continue with email</button>
+            </div>
+            <p class="small" style="margin-top:18px">Already have an account? <u>Sign in</u></p>
+          </div>
+        </article>
+
+        <article class="success-card" aria-label="Publication success visual concept">
+          <div class="success-content">
+            <div class="success-mark">✓</div>
+            <p class="eyebrow">Published</p>
+            <h2>Your celebration has a digital home.</h2>
+            <p style="color:#e9dcd5">Share one trusted link with every guest.</p>
+            <div class="success-link">wambe.africa/e/amina-tunde-8x4k&nbsp;&nbsp; <strong>Copy</strong></div>
+            <button class="button whatsapp" style="width:100%">Share on WhatsApp</button>
+            <button class="button" style="width:100%;margin-top:10px;background:transparent;color:#fff;border-color:rgb(255 255 255 / 28%)">View event</button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">US-002 visual direction concept · Companion to the preserved structural wireframes · Not production UI</footer>
+</body>
+</html>

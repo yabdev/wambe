@@ -1,0 +1,38 @@
+story_id: US-001
+title: Self-service password reset
+product_owner: Human user
+methodology: Agile
+state: ACTIVE
+current_stage: ux
+active_persona: persona-ui-ux
+implementation:
+  profile: null
+  order: null
+  contracts: []
+handoff:
+  summary: UX flow is ready; PO must decide whether reset invalidates existing sessions
+  blockers:
+    - Session invalidation policy needs a Product Owner decision
+  next_action: /sdlc-orchestrator APPROVE US-001 stage: ux
+gates:
+  intake: { status: APPROVED, updated: "2026-07-12", artifact: "ARTIFACTS.md#intake" }
+  requirements: { status: APPROVED, updated: "2026-07-12", artifact: "ARTIFACTS.md#requirements" }
+  ux: { status: PENDING_PO, updated: "2026-07-12", artifact: "ARTIFACTS.md#ux" }
+  architecture: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#architecture" }
+  implementation_backend: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#implementation--backend" }
+  implementation_frontend: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#implementation--frontend" }
+  qa: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#qa" }
+  security: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#security" }
+  operations: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#operations" }
+  done: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#final-product-owner-notes" }
+decisions:
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: intake
+    decision: APPROVED
+    reason: Example baseline
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: requirements
+    decision: APPROVED
+    reason: Example baseline

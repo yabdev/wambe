@@ -1,0 +1,145 @@
+.sections {
+  display: grid;
+  gap: 46px;
+}
+
+.sections section {
+  display: grid;
+  gap: 18px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionHeading h2 {
+  font-size: 1.85rem;
+}
+
+.sectionHeading span {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+
+.eventCard {
+  overflow: hidden;
+}
+
+.cardArt {
+  display: grid;
+  min-height: 190px;
+  align-content: end;
+  gap: 4px;
+  padding: 22px;
+  background:
+    linear-gradient(145deg, rgb(184 70 57 / 82%), rgb(94 39 35 / 92%)),
+    var(--coral);
+  color: white;
+}
+
+.cardArt[data-published="true"] {
+  background:
+    linear-gradient(145deg, rgb(31 120 83 / 76%), rgb(18 68 50 / 94%)),
+    var(--green);
+}
+
+.cardArt span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cardArt strong {
+  font-size: 1.85rem;
+}
+
+.cardBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+}
+
+.cardBody > div {
+  display: grid;
+  gap: 8px;
+}
+
+.cardBody p {
+  font-size: 0.82rem;
+}
+
+.badge {
+  width: fit-content;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.badge[data-status="published"] {
+  background: #e5f3ec;
+  color: var(--green);
+}
+
+.empty {
+  display: grid;
+  min-height: 410px;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  padding: clamp(30px, 8vw, 70px);
+  text-align: center;
+}
+
+.empty h2 {
+  max-width: 14ch;
+  font-size: clamp(2rem, 6vw, 3.6rem);
+}
+
+.empty p {
+  max-width: 50ch;
+}
+
+.confetti {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--coral-soft);
+  color: var(--coral);
+  font-size: 2rem;
+}
+
+.skeleton {
+  min-height: 310px;
+  background: linear-gradient(100deg, var(--surface-soft) 20%, var(--surface) 45%, var(--surface-soft) 70%);
+  background-size: 300% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -150% 0; }
+}

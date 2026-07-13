@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wambe.africa/contracts/product-events-v1.schema.json",
+  "title": "Wambe Product Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "name",
+    "eventId",
+    "creationSessionId",
+    "occurredAt",
+    "eligibility",
+    "deviceClass",
+    "networkQuality",
+    "properties"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "name": {
+      "enum": [
+        "event_creation_started",
+        "draft_save_succeeded",
+        "draft_save_failed",
+        "validation_failed",
+        "media_upload_succeeded",
+        "media_upload_failed",
+        "event_publish_succeeded",
+        "event_publish_failed",
+        "share_clicked",
+        "event_lifecycle_changed"
+      ]
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "creationSessionId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "eligibility": {
+      "enum": [
+        "eligible_first_time",
+        "resumed_draft",
+        "staff_assisted"
+      ]
+    },
+    "deviceClass": {
+      "enum": [
+        "mobile",
+        "tablet",
+        "desktop",
+        "unknown"
+      ]
+    },
+    "networkQuality": {
+      "enum": [
+        "good",
+        "fair",
+        "poor",
+        "unknown"
+      ]
+    },
+    "properties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "step": {
+          "enum": [
+            "auth",
+            "basics",
+            "venue",
+            "style",
+            "privacy",
+            "publish",
+            "share",
+            "management"
+          ]
+        },
+        "outcomeCode": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]{1,64}$"
+        },
+        "mediaRole": {
+          "enum": [
+            "invitation",
+            "aso_ebi"
+          ]
+        },
+        "visibility": {
+          "enum": [
+            "public",
+            "private_link",
+            "invite_only",
+            "hidden_location"
+          ]
+        },
+        "hadMediaUpload": {
+          "type": "boolean"
+        },
+        "lifecycleAction": {
+          "enum": [
+            "published",
+            "unpublished",
+            "republished",
+            "deleted"
+          ]
+        }
+      }
+    }
+  }
+}

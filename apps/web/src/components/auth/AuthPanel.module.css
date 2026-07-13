@@ -1,0 +1,87 @@
+.panel {
+  display: grid;
+  width: min(100%, 520px);
+  gap: 22px;
+  padding: clamp(28px, 6vw, 56px);
+  border: 1px solid rgb(222 211 199 / 82%);
+  border-radius: var(--radius-lg);
+  background: rgb(255 253 249 / 94%);
+  box-shadow: var(--shadow-md);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.65rem;
+}
+
+.mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--coral);
+  color: white;
+  font-family: Georgia, serif;
+}
+
+.panel h1 {
+  max-width: 12ch;
+  font-size: clamp(2.3rem, 7vw, 4.4rem);
+}
+
+.intro {
+  max-width: 42ch;
+  color: var(--muted);
+}
+
+.google {
+  width: 100%;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.divider::before,
+.divider::after {
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+  content: "";
+}
+
+.form {
+  display: grid;
+  gap: 17px;
+}
+
+.switches {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.switches button {
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--coral-dark);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.demo {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+}

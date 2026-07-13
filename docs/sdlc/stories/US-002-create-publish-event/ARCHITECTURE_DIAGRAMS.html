@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>US-002 · Wambe Architecture Diagrams</title>
+  <style>
+    :root {
+      --ink: #201a17;
+      --muted: #736861;
+      --paper: #fbf7f1;
+      --card: #fffdf9;
+      --line: #dfd3c6;
+      --wine: #6f2135;
+      --wine-dark: #491321;
+      --gold: #b68a3b;
+      --green: #245c4d;
+      --shadow: 0 18px 50px rgba(64, 36, 27, .10);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 2%, rgba(182,138,59,.13), transparent 25rem),
+        radial-gradient(circle at 92% 12%, rgba(111,33,53,.10), transparent 28rem),
+        var(--paper);
+      font: 15px/1.62 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 30px 24px;
+      color: #fff9ef;
+      background: linear-gradient(165deg, var(--wine-dark), #24171a 72%);
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+    .mark {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      color: #f3d899;
+      font: 700 21px/1 Georgia, serif;
+    }
+    aside h1 {
+      margin: 0 0 6px;
+      font: 600 24px/1.15 Georgia, "Times New Roman", serif;
+    }
+    aside p { margin: 0 0 22px; color: #d9c9c5; font-size: 12px; }
+    nav { display: grid; gap: 4px; }
+    nav a {
+      padding: 8px 10px;
+      color: #e7d9d5;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    nav a:hover, nav a:focus-visible { color: white; background: rgba(255,255,255,.09); outline: none; }
+    .status {
+      margin-top: 24px;
+      padding: 12px;
+      border: 1px solid rgba(243,216,153,.25);
+      border-radius: 10px;
+      color: #f3d899;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    main { min-width: 0; padding: 52px clamp(24px, 5vw, 76px) 80px; }
+    .hero {
+      max-width: 980px;
+      margin: 0 auto 34px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      color: var(--wine);
+      font-weight: 750;
+      font-size: 12px;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .hero h2 {
+      max-width: 760px;
+      margin: 10px 0 12px;
+      font: 600 clamp(38px, 6vw, 72px)/.98 Georgia, "Times New Roman", serif;
+      letter-spacing: -.035em;
+    }
+    .hero p { max-width: 760px; color: var(--muted); font-size: 17px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .pill {
+      padding: 6px 11px;
+      color: var(--green);
+      background: #edf5f1;
+      border: 1px solid #c8ddd5;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .grid { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+    .card {
+      scroll-margin-top: 24px;
+      min-width: 0;
+      padding: clamp(20px, 3vw, 36px);
+      background: rgba(255,253,249,.92);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-head {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 24px;
+    }
+    .number {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      color: white;
+      background: var(--wine);
+      border-radius: 50%;
+      font-family: Georgia, serif;
+    }
+    h3 { margin: 1px 0 4px; font: 600 27px/1.1 Georgia, "Times New Roman", serif; }
+    h4 { margin: 28px 0 10px; color: var(--wine-dark); font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+    .card-head p, .note { margin: 0; color: var(--muted); }
+    .diagram {
+      overflow: auto;
+      min-height: 180px;
+      padding: 18px;
+      background: #fff;
+      border: 1px solid #eadfd4;
+      border-radius: 14px;
+    }
+    .mermaid { min-width: 720px; display: flex; justify-content: center; }
+    .diagram.sequence .mermaid, .diagram.erd .mermaid { min-width: 1050px; }
+    .callout {
+      margin-top: 18px;
+      padding: 14px 16px;
+      color: #4e423c;
+      background: #f8efe3;
+      border-left: 4px solid var(--gold);
+      border-radius: 4px 10px 10px 4px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--wine); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    ul { margin: 12px 0 0; padding-left: 20px; }
+    code { padding: 2px 5px; background: #f2ebe3; border-radius: 5px; font-size: .9em; }
+    footer { max-width: 1180px; margin: 34px auto 0; color: var(--muted); font-size: 12px; text-align: center; }
+    @media (max-width: 900px) {
+      .shell { display: block; }
+      aside { position: relative; height: auto; padding: 22px; }
+      nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      main { padding: 34px 16px 60px; }
+      .hero h2 { font-size: 46px; }
+    }
+    @media print {
+      aside { display: none; }
+      .shell { display: block; }
+      main { padding: 0; }
+      .card { break-inside: avoid; box-shadow: none; margin-bottom: 14px; }
+      .diagram { overflow: visible; }
+      .mermaid { min-width: 0 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="mark">W</div>
+      <h1>Architecture Atlas</h1>
+      <p>US-002 · Create and publish a Wambe event</p>
+      <nav aria-label="Architecture diagrams">
+        <a href="#context">01 · Context</a>
+        <a href="#containers">02 · Containers</a>
+        <a href="#components">03 · Java components</a>
+        <a href="#deployment">04 · Deployment</a>
+        <a href="#erd">05 · Database ERD</a>
+        <a href="#auth">06 · Authentication</a>
+        <a href="#publish">07 · Save & publish</a>
+        <a href="#media">08 · Media scanning</a>
+        <a href="#states">09 · Lifecycles</a>
+        <a href="#visibility">10 · Visibility</a>
+        <a href="#traceability">11 · Traceability</a>
+      </nav>
+      <div class="status">Approved · 13 July 2026</div>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <div class="eyebrow">Founder-grade system design · Version 1</div>
+        <h2>One story. Every critical boundary.</h2>
+        <p>A visual architecture pack for Wambe’s first production flow: Next.js on
+          Vercel, a Spring Boot API on Cloud Run, and Supabase for identity, PostgreSQL,
+          and private media storage.</p>
+        <div class="pills">
+          <span class="pill">Next.js</span>
+          <span class="pill">Spring Boot</span>
+          <span class="pill">JPA + Flyway</span>
+          <span class="pill">Supabase</span>
+          <span class="pill">Cloud Run</span>
+          <span class="pill">OpenAPI v1</span>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="card" id="context">
+          <div class="card-head"><div class="number">1</div><div>
+            <h3>System context</h3>
+            <p>People and external systems that interact with Wambe in US-002.</p>
+          </div></div>
+          <div class="diagram"><pre class="mermaid">
+flowchart LR
+    Host["Host&lt;br/&gt;creates and manages Wambes"]
+    Guest["Guest / social crawler&lt;br/&gt;metadata-only in US-002"]
+    Wambe["Wambe platform&lt;br/&gt;Next.js + Spring Boot"]
+    Maps["Google Maps Platform"]
+    Auth["Supabase Auth"]
+    Resend["Resend SMTP"]
+    Host -->|"HTTPS"| Wambe
+    Guest -->|"Public or private-link slug"| Wambe
+    Wambe -->|"OAuth, email/password, JWT"| Auth
+    Auth -->|"Verification and reset email"| Resend
+    Wambe -->|"Place search and pin"| Maps
+          </pre></div>
+          <div class="callout">RSVP, guest authentication, invitations, QR passes,
+            payments, and full guest event pages remain outside this story.</div>
+        </section>
+
+        <section class="card" id="containers">
+          <div class="card-head"><div class="number">2</div><div>
+            <h3>Containers and trust boundaries</h3>
+            <p>Runtime responsibilities and credential boundaries.</p>
+          </div></div>
+          <div class="diagram"><pre class="mermaid">
+flowchart LR
+    subgraph Browser["Untrusted browser"]
+        UI["Next.js host UI / PWA"]
+        Client["Generated TypeScript client"]
+        MapsWidget["Google Maps widget"]
+        UI --> Client
+        UI --> MapsWidget
+    end
+    subgraph Vercel["Vercel"]
+        Web["Next.js App Router&lt;br/&gt;auth callback + metadata HTML"]
+    end
+    subgraph GCP["Google Cloud"]
+        API["Spring Boot API&lt;br/&gt;Security + MVC + JPA"]
+        Scanner["ClamAV scanner&lt;br/&gt;isolated Cloud Run"]
+        Scheduler["Cloud Scheduler"]
+    end
+    subgraph Supabase["Supabase"]
+        Auth["Auth + JWKS"]
+        DB[("PostgreSQL&lt;br/&gt;Flyway + RLS")]
+        Q[("Private quarantine")]
+        A[("Private active")]
+    end
+    subgraph Telemetry["Self-hosted telemetry"]
+        Umami["Umami"]
+        OTel["OTel Collector"]
+        Grafana["Grafana stack"]
+        OTel --> Grafana
+    end
+    UI --> Web
+    Web --> Auth
+    Client -->|"Bearer JWT"| API
+    API -->|"JWKS"| Auth
+    API -->|"JDBC"| DB
+    API --> Q
+    API --> A
+    API -->|"Signed scan request"| Scanner
+    Scanner -->|"Short-lived URL"| Q
+    Scanner -->|"HMAC callback"| API
+    Scheduler -->|"OIDC"| API
+    UI -. "Consent-gated" .-> Umami
+    API -. "Fail-open OTLP" .-> OTel
+          </pre></div>
+          <div class="callout">No service-role, database, scanner, or telemetry secret
+            reaches the browser. The scanner has no database credentials.</div>
+        </section>
+
+        <section class="card" id="components">
+          <div class="card-head"><div class="number">3</div><div>
+            <h3>Spring Boot components</h3>
+            <p>A modular Java backend with one deployment boundary.</p>
+          </div></div>
+          <div class="diagram"><pre class="mermaid">
+flowchart TB
+    HTTP["Spring MVC controllers&lt;br/&gt;OpenAPI delegates"]
+    Security["Spring Security&lt;br/&gt;JWT, CORS, principal"]
+    Common["Common web&lt;br/&gt;request ID, errors, idempotency"]
+    EventApp["Event application services"]
+    MediaApp["Media application services"]
+    SessionApp["Creation session services"]
+    IdentityApp["Identity-link service"]
+    Jobs["Retention / scan dispatch"]
+    Domain["Event domain&lt;br/&gt;states + publication rules"]
+    Repos["JPA repositories&lt;br/&gt;owner predicates"]
+    RLS["Transaction RLS context&lt;br/&gt;set_config local"]
+    Storage["Storage adapter"]
+    AuthAdmin["Auth admin adapter"]
+    Scan["Scanner HMAC adapter"]
+    Telemetry["OTel / product-event adapters"]
+    Security --> HTTP
+    Common --> HTTP
+    HTTP --> EventApp
+    HTTP --> MediaApp
+    HTTP --> SessionApp
+    HTTP --> IdentityApp
+    HTTP --> Jobs
+    EventApp --> Domain
+    MediaApp --> Domain
+    EventApp --> Repos
+    MediaApp --> Repos
+    SessionApp --> Repos
+    IdentityApp --> Repos
+    Jobs --> Repos
+    Repos --> RLS
+    MediaApp --> Storage
+    IdentityApp --> AuthAdmin
+    MediaApp --> Scan
+    Jobs --> Scan
+    EventApp -. "After commit" .-> Telemetry
+          </pre></div>
+          <div class="callout">Controllers stay thin. Application services own
+            transactions. Flyway owns schema changes; Hibernate only validates them.</div>
+        </section>
+
+        <section class="card" id="deployment">
+          <div class="card-head"><div class="number">4</div><div>
+            <h3>Deployment topology</h3>
+            <p>Independent frontend, API, scanning, data, and telemetry environments.</p>
+          </div></div>
+          <div class="diagram"><pre class="mermaid">
+flowchart TB
+    Browser["Host browser"]
+    Crawler["Guest / social crawler"]
+    Vercel["Vercel&lt;br/&gt;Next.js"]
+    subgraph Google["Google Cloud project"]
+        ApiRun["Cloud Run: wambe-api&lt;br/&gt;Spring Boot"]
+        ScanRun["Cloud Run: media-scanner&lt;br/&gt;ClamAV"]
+        Sched["Cloud Scheduler"]
+        Secrets["Secret Manager"]
+    end
+    subgraph Data["Supabase project"]
+        Pooler["Supavisor / DB endpoint"]
+        Postgres[("PostgreSQL")]
+        Auth["Auth + JWKS"]
+        Storage[("Private storage")]
+        Pooler --> Postgres
+    end
+    subgraph Ops["Private telemetry VPS"]
+        Collector["OTel Collector"]
+        Stack["Grafana stack"]
+        Analytics["Umami"]
+        Collector --> Stack
+    end
+    Browser --> Vercel
+    Crawler --> Vercel
+    Browser -->|"API + Bearer JWT"| ApiRun
+    Vercel --> Auth
+    Vercel -->|"Metadata request"| ApiRun
+    ApiRun --> Pooler
+    ApiRun --> Auth
+    ApiRun --> Storage
+    ApiRun --> ScanRun
+    ScanRun --> Storage
+    Sched -->|"OIDC"| ApiRun
+    Secrets --> ApiRun
+    Secrets --> ScanRun
+    ApiRun -. "OTLP" .-> Collector
+    Vercel -. "Consent-gated" .-> Analytics
+          </pre></div>
+          <p class="note">Development, staging, and production use separate Supabase,
+            Vercel, and Google Cloud environments. API and scanner revisions roll back
+            independently.</p>
+        </section>
+
+        <section class="card" id="erd">
+          <div class="card-head"><div class="number">5</div><div>
+            <h3>Logical database ERD</h3>
+            <p>Core ownership, event, media, KPI, idempotency, and audit relationships.</p>
+          </div></div>
+          <div class="diagram erd"><pre class="mermaid">
+erDiagram
+    AUTH_USERS {
+        uuid id PK
+        text email
+        timestamptz created_at
+    }
+    HOST_PROFILES {
+        uuid id PK,FK
+        text verified_email_snapshot
+        text display_name
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    IDENTITY_LINK_AUDIT {
+        uuid id PK
+        uuid host_id FK
+        text provider
+        text provider_subject_hash
+        text result
+        timestamptz created_at
+    }
+    EVENTS {
+        uuid id PK
+        uuid owner_id FK
+        uuid client_creation_key
+        text event_type
+        text title
+        timestamptz starts_at
+        text timezone
+        text status
+        text visibility
+        text venue_display_address
+        decimal venue_latitude
+        decimal venue_longitude
+        text slug
+        bigint version
+        timestamptz published_at
+        timestamptz deleted_at
+        timestamptz updated_at
+    }
+    EVENT_MEDIA {
+        uuid id PK
+        uuid event_id FK
+        uuid owner_id FK
+        text role
+        text claimed_mime
+        text detected_mime
+        bigint size_bytes
+        text storage_status
+        text scan_result
+        timestamptz deleted_at
+    }
+    SCAN_JOBS {
+        uuid id PK
+        uuid media_id FK
+        text status
+        int attempts
+        timestamptz next_attempt_at
+        timestamptz lease_expires_at
+    }
+    CREATION_SESSIONS {
+        uuid id PK
+        uuid event_id FK
+        uuid owner_id FK
+        timestamptz opened_at
+        timestamptz first_published_at
+        text eligibility
+        text device_class
+        text network_quality
+    }
+    PRODUCT_EVENTS {
+        uuid id PK
+        uuid owner_id FK
+        uuid event_id FK
+        uuid creation_session_id FK
+        text name
+        text schema_version
+        timestamptz occurred_at
+        timestamptz received_at
+        jsonb allowed_properties
+        text consent_category
+    }
+    IDEMPOTENCY_KEYS {
+        uuid owner_id FK
+        text route
+        uuid idempotency_key
+        text request_hash
+        int response_status
+        jsonb response_body
+        timestamptz created_at
+        timestamptz expires_at
+    }
+    SCANNER_CALLBACK_NONCES {
+        uuid nonce PK
+        uuid media_id FK
+        timestamptz request_timestamp
+        text body_digest
+        timestamptz consumed_at
+        timestamptz expires_at
+    }
+    AUDIT_LOG {
+        uuid id PK
+        uuid owner_id FK
+        uuid resource_id
+        text action
+        text resource_type
+        text outcome
+        timestamptz created_at
+    }
+    AUTH_USERS ||--|| HOST_PROFILES : "has profile"
+    AUTH_USERS ||--o{ IDENTITY_LINK_AUDIT : "records links"
+    AUTH_USERS ||--o{ EVENTS : "owns"
+    AUTH_USERS ||--o{ CREATION_SESSIONS : "owns KPI sessions"
+    AUTH_USERS ||--o{ PRODUCT_EVENTS : "owns product events"
+    AUTH_USERS ||--o{ IDEMPOTENCY_KEYS : "scopes"
+    AUTH_USERS ||--o{ AUDIT_LOG : "owns activity"
+    EVENTS ||--o{ EVENT_MEDIA : "has"
+    EVENT_MEDIA ||--o| SCAN_JOBS : "queues"
+    EVENT_MEDIA ||--o{ SCANNER_CALLBACK_NONCES : "protects callbacks"
+    EVENTS ||--o{ CREATION_SESSIONS : "measured by"
+    EVENTS ||--o{ PRODUCT_EVENTS : "emits"
+    CREATION_SESSIONS ||--o{ PRODUCT_EVENTS : "groups"
+          </pre></div>
+          <h4>Critical constraints</h4>
+          <ul>
+            <li>Unique event slug and unique owner/client-creation key.</li>
+            <li>Unique scan job per media record, callback nonce, and owner/route/idempotency key.</li>
+            <li>Explicit owner predicates plus transaction-local RLS context.</li>
+            <li>Supabase manages <code>auth.users</code>; Flyway owns application schema, keys, indexes, and policies.</li>
+          </ul>
+        </section>
+
+        <section class="card" id="auth">
+          <div class="card-head"><div class="number">6</div><div>
+            <h3>Authentication sequence</h3>
+            <p>Supabase handles identity; Spring validates short-lived bearer tokens.</p>
+          </div></div>
+          <div class="diagram sequence"><pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Host
+    participant Web as Next.js / Supabase SSR
+    participant Auth as Supabase Auth
+    participant API as Spring Boot API
+    participant JWKS as Supabase JWKS
+    participant DB as PostgreSQL + RLS
+    Host->>Web: Choose Google OAuth or email/password
+    Web->>Auth: Start PKCE sign-in / registration
+    Auth-->>Web: Authorization code or verified session
+    Web->>Auth: Exchange code with PKCE verifier
+    Auth-->>Web: Access token + refresh session
+    Web-->>Host: Authenticated host UI
+    Host->>API: Request with Bearer access token
+    API->>JWKS: Resolve/cache signing key
+    JWKS-->>API: Public signing keys
+    API->>API: Validate signature, issuer, expiry, audience
+    API->>DB: BEGIN + transaction-local owner context
+    API->>DB: Owner-scoped query under RLS
+    DB-->>API: Host-owned result
+    API-->>Host: Response
+    alt Access token expired
+        API-->>Host: 401
+        Host->>Web: Ask Supabase client to refresh
+        Web->>Auth: Refresh session
+        Auth-->>Web: New access token
+        Web-->>Host: Updated client session
+        Host->>API: Retry once
+    end
+          </pre></div>
+          <div class="callout">Spring never processes passwords, owns login callbacks,
+            stores refresh tokens, or accepts anon/service-role tokens on host routes.</div>
+        </section>
+
+        <section class="card" id="publish">
+          <div class="card-head"><div class="number">7</div><div>
+            <h3>Draft, autosave, and publish</h3>
+            <p>Optimistic concurrency, idempotency, and one authoritative transaction.</p>
+          </div></div>
+          <div class="diagram sequence"><pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Host
+    participant UI as Next.js editor
+    participant API as Spring Boot API
+    participant Idem as Idempotency service
+    participant DB as PostgreSQL
+    participant Telemetry as OTel exporter
+    Host->>UI: Open creation form
+    UI->>API: POST /events + Idempotency-Key
+    API->>Idem: Claim owner + route + key + request hash
+    API->>DB: Create draft and creation session
+    DB-->>API: Event version 1 + session ID
+    API-->>UI: 201 EventWithSession
+    loop Debounced autosave
+        UI->>API: PATCH event + If-Match + key
+        API->>Idem: Replay or claim
+        API->>DB: Owner-scoped optimistic update
+        alt Current version
+            DB-->>API: Incremented version
+            API-->>UI: 200 saved
+        else Stale version
+            DB-->>API: Version conflict
+            API-->>UI: 409 + current state
+        end
+    end
+    Host->>UI: Publish
+    UI->>API: POST publish + If-Match + key
+    API->>DB: BEGIN + owner context
+    API->>DB: Validate fields, future time, venue, media
+    API->>DB: Assign slug + published_at + status
+    API->>DB: Complete KPI session + product event + audit
+    API->>DB: COMMIT
+    API-->>UI: Canonical URL + share eligibility
+    API-->>Telemetry: Export after commit and fail open
+          </pre></div>
+          <div class="callout">Failure leaves the event unpublished. An identical replay
+            returns the cached response without creating a second event or transition.</div>
+        </section>
+
+        <section class="card" id="media">
+          <div class="card-head"><div class="number">8</div><div>
+            <h3>Media quarantine and scanning</h3>
+            <p>Direct uploads remain private until content verification succeeds.</p>
+          </div></div>
+          <div class="diagram sequence"><pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Host
+    participant UI as Next.js editor
+    participant API as Spring Boot API
+    participant Q as Quarantine storage
+    participant Jobs as Scan jobs
+    participant Scanner as Cloud Run ClamAV
+    participant A as Active storage
+    Host->>UI: Select allowed file up to 10 MiB
+    UI->>API: POST media intent
+    API->>API: Validate owner, role, claimed type, size
+    API->>Q: Create signed upload
+    API-->>UI: Media ID + upload URL
+    UI->>Q: Direct private upload
+    UI->>API: POST /events/{eventId}/media/{mediaId}/complete
+    API->>Q: Verify object and size
+    API->>Jobs: Insert unique scan job
+    API-->>UI: 202 scanning
+    Jobs->>API: Lease due scan job
+    API->>Scanner: Signed scan request + preview-write URL
+    Scanner->>Q: Short-lived download
+    Scanner->>Scanner: Magic bytes + safe parse + ClamAV
+    alt Clean and allowed
+        Scanner->>Q: Write sanitized preview
+        Scanner->>API: HMAC clean callback + object/preview digests
+        API->>A: Promote verified original + preview
+        API->>Q: Delete quarantine object
+        UI->>API: GET /events/{eventId}/media
+        API-->>UI: Active + preview status
+    else Unsafe or invalid
+        Scanner->>API: HMAC rejected callback
+        API->>Q: Delete quarantine object
+        UI->>API: GET /events/{eventId}/media
+        API-->>UI: Rejected + retry guidance
+    end
+          </pre></div>
+          <div class="callout">Callbacks are at-least-once, timestamped, nonce-protected,
+            and idempotent. Pending or rejected attached media blocks publication.</div>
+        </section>
+
+        <section class="card" id="states">
+          <div class="card-head"><div class="number">9</div><div>
+            <h3>Lifecycle states</h3>
+            <p>Allowed event and media transitions.</p>
+          </div></div>
+          <h4>Event lifecycle</h4>
+          <div class="diagram"><pre class="mermaid">
+stateDiagram-v2
+    [*] --> draft: Create
+    draft --> draft: Autosave
+    draft --> published: Publish after validation
+    published --> published: Edit
+    published --> unpublished: Unpublish
+    unpublished --> published: Republish with same slug
+    draft --> deleted: Delete
+    published --> deleted: Delete
+    unpublished --> deleted: Delete
+    deleted --> [*]: Terminal
+          </pre></div>
+          <h4>Media lifecycle</h4>
+          <div class="diagram"><pre class="mermaid">
+stateDiagram-v2
+    [*] --> quarantine: Intent and upload
+    quarantine --> scanning: Complete upload
+    scanning --> active: Allowed and clean
+    scanning --> rejected: Unsafe, invalid or failed
+    rejected --> [*]: Remove quarantine object
+    active --> deleted: Host or event deletion
+    deleted --> [*]: Purge within 30 days
+          </pre></div>
+        </section>
+
+        <section class="card" id="visibility">
+          <div class="card-head"><div class="number">10</div><div>
+            <h3>Visibility and metadata</h3>
+            <p>Public rendering cannot bypass the downstream guest-access dependency.</p>
+          </div></div>
+          <div class="diagram"><pre class="mermaid">
+flowchart TD
+    Request["Guest requests Next.js /e/{slug}"] --> API["Next.js calls Spring metadata API"]
+    API --> Exists{"Published event exists?"}
+    Exists -- No --> Missing["Neutral 404 or 410&lt;br/&gt;no OG metadata"]
+    Exists -- Yes --> Mode{"Visibility"}
+    Mode -- public --> Public["Safe metadata&lt;br/&gt;indexable"]
+    Mode -- private_link --> Private["Safe metadata&lt;br/&gt;noindex"]
+    Mode -- invite_only --> Blocked["Neutral unavailable&lt;br/&gt;sharing blocked"]
+    Mode -- hidden_location --> Blocked
+    Public --> Render["Render canonical /e/{slug} HTML"]
+    Private --> Render
+          </pre></div>
+          <div class="callout">Invite-only and hidden-location modes may be configured,
+            but they expose no public metadata until guest enforcement ships.</div>
+        </section>
+
+        <section class="card" id="traceability">
+          <div class="card-head"><div class="number">11</div><div>
+            <h3>Decision traceability</h3>
+            <p>Each view maps back to governed architecture and versioned contracts.</p>
+          </div></div>
+          <table>
+            <thead><tr><th>View</th><th>Primary decisions and contracts</th></tr></thead>
+            <tbody>
+              <tr><td>System context</td><td>Scope boundary, ADR-001–006</td></tr>
+              <tr><td>Containers</td><td>ADR-001, ADR-002, ADR-004, ADR-006</td></tr>
+              <tr><td>Java components</td><td>ADR-008, ADR-010, slices S-01–S-08</td></tr>
+              <tr><td>Deployment</td><td>ADR-001, ADR-004, ADR-006, rollout/rollback</td></tr>
+              <tr><td>ERD</td><td>Data model, ADR-008, ADR-010, Flyway migrations</td></tr>
+              <tr><td>Authentication</td><td>ADR-002, OpenAPI bearerAuth, AC-001/011</td></tr>
+              <tr><td>Save and publish</td><td>Event endpoints, ADR-008, AC-002–005/014</td></tr>
+              <tr><td>Media scanning</td><td>ADR-004, media endpoints, AC-006</td></tr>
+              <tr><td>Lifecycles</td><td>Event/media invariants, AC-007–010</td></tr>
+              <tr><td>Visibility</td><td>ADR-007, metadata endpoint, AC-013</td></tr>
+            </tbody>
+          </table>
+          <p class="note">The OpenAPI contract, product-event JSON Schema, and Architecture
+            section of ARTIFACTS.md remain authoritative if a diagram becomes stale.</p>
+        </section>
+      </div>
+      <footer>Wambe · US-002 approved architecture · 13 July 2026</footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: "strict",
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#f7ecdf",
+        primaryTextColor: "#201a17",
+        primaryBorderColor: "#6f2135",
+        lineColor: "#735f56",
+        secondaryColor: "#edf5f1",
+        tertiaryColor: "#fffdf9",
+        actorBkg: "#f7ecdf",
+        actorBorder: "#6f2135",
+        actorTextColor: "#201a17",
+        signalColor: "#6f2135",
+        signalTextColor: "#201a17",
+        noteBkgColor: "#fff5d8",
+        noteBorderColor: "#b68a3b",
+        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      flowchart: { curve: "basis", htmlLabels: true },
+      sequence: { useMaxWidth: false, wrap: true },
+      er: { useMaxWidth: false }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+story_id: US-NNN
+title: Replace with story title
+product_owner: Human user
+methodology: Agile
+state: ACTIVE
+current_stage: intake
+active_persona: persona-business-analyst
+implementation:
+  profile: null
+  order: null
+  contracts: []
+handoff:
+  summary: Awaiting Business Analyst intake
+  blockers: []
+  next_action: /persona-business-analyst US-NNN stage: intake
+gates:
+  intake: { status: IN_PROGRESS, updated: null, artifact: "ARTIFACTS.md#intake" }
+  requirements: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#requirements" }
+  ux: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#ux" }
+  architecture: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#architecture" }
+  implementation_backend: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#implementation--backend" }
+  implementation_frontend: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#implementation--frontend" }
+  qa: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#qa" }
+  security: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#security" }
+  operations: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#operations" }
+  done: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#final-product-owner-notes" }
+decisions: []

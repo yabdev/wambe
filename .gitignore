@@ -1,0 +1,8 @@
+.idea/
+.vscode/
+.local-storage/
+**/target/
+*.log
+.env
+.env.*
+!.env.example

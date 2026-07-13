@@ -1,0 +1,32 @@
+---
+description: Enforces Product Owner authority, SDLC stage gates, and artifact handoffs
+alwaysApply: true
+---
+
+# SDLC Governance
+
+- The human user is the Product Owner (PO) and is the sole product authority.
+- Use `docs/sdlc/stories/{STORY-ID}-{slug}/STATUS.yaml` as the gate source of truth.
+- Read the story status and prior artifacts before performing persona work.
+- A stage may start only when every prerequisite in `docs/sdlc/WORKFLOW.md` is satisfied.
+- Frontend and backend implementation are sibling gates controlled by the architecture's
+  PO-approved profile and order; QA requires both gates to be `APPROVED` or `WAIVED`.
+- The first `intake` stage requires an explicit PO request naming or creating the story.
+- When persona work starts, set its gate to `IN_PROGRESS` and update `current_stage`
+  and `active_persona`; a merely unblocked stage remains `READY`.
+- Ask the PO whenever scope, priority, acceptance criteria, risk tolerance, or trade-offs are unclear.
+- Never invent PO answers, silently expand scope, or approve on the PO's behalf.
+- Only an explicit PO command containing `APPROVE`, `REJECT`, or `WAIVE`, a story ID,
+  and `stage: <stage>` may change that stage's decision.
+- After producing a stage artifact, set its status to `PENDING_PO`, record the handoff,
+  and stop. Do not begin the next stage without PO approval.
+- If the PO says `AND CONTINUE`, approval and the next stage may occur in the same turn,
+  but the approval must be recorded before next-stage work starts.
+- A persona writes only its assigned section of `ARTIFACTS.md` plus necessary project
+  files explicitly allowed by its contract. Frontend and backend may not overwrite one
+  another's implementation sections.
+- Record every approval decision in the story's `STATUS.yaml` decision log.
+- Do not claim that another persona was automatically invoked. State the next recommended
+  `/persona-*` command when a separate invocation is required.
+- Mark the story `DONE` only after every required gate is `APPROVED` or `WAIVED` and
+  the PO explicitly approves `stage: done`.

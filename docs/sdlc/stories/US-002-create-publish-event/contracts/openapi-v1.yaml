@@ -1,0 +1,793 @@
+openapi: 3.1.0
+info:
+  title: Wambe Host Event API
+  version: 1.0.0
+  description: Architecture-owned contract for US-002 host authentication integration, event lifecycle, media, and creation milestones.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /auth/link-identity:
+    post:
+      operationId: linkIdentity
+      summary: Link a verified provider identity after recent reauthentication
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkIdentityRequest"
+      responses:
+        "204":
+          description: Identity linked or already linked to this host
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /events:
+    post:
+      operationId: createEvent
+      summary: Create an owned draft and creation session
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventWithSession"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    get:
+      operationId: listEvents
+      summary: List the authenticated host's events
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/EventStatus"
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        "200":
+          description: Owner-scoped event page
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Event"
+                  nextCursor:
+                    type: [string, "null"]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /events/{eventId}:
+    parameters:
+      - $ref: "#/components/parameters/EventId"
+    get:
+      operationId: getEvent
+      summary: Get one owned event management representation
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateEvent
+      summary: Autosave partial event fields
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventRequest"
+      responses:
+        "200":
+          description: Saved event with incremented version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      operationId: deleteEvent
+      summary: Soft-delete an owned event and schedule media purge
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "204":
+          description: Event removed from active surfaces
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /events/{eventId}/publish:
+    post:
+      operationId: publishEvent
+      summary: Validate and transactionally publish or republish an event
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: Published event and stable canonical URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [event, canonicalUrl, shareEligible]
+                properties:
+                  event:
+                    $ref: "#/components/schemas/Event"
+                  canonicalUrl:
+                    type: string
+                    format: uri
+                  shareEligible:
+                    type: boolean
+                  shareBlockedReason:
+                    type: [string, "null"]
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /events/{eventId}/unpublish:
+    post:
+      operationId: unpublishEvent
+      summary: Unpublish while preserving the stable slug
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: Unpublished event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /events/{eventId}/media/intents:
+    post:
+      operationId: createMediaIntent
+      summary: Create a private quarantine upload intent
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [role, filename, claimedMimeType, sizeBytes]
+              properties:
+                role:
+                  $ref: "#/components/schemas/MediaRole"
+                filename:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                claimedMimeType:
+                  type: string
+                  enum: [image/jpeg, image/png, image/webp, application/pdf]
+                sizeBytes:
+                  type: integer
+                  minimum: 1
+                  maximum: 10485760
+      responses:
+        "201":
+          description: Signed quarantine upload intent
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media, uploadUrl, expiresAt]
+                properties:
+                  media:
+                    $ref: "#/components/schemas/Media"
+                  uploadUrl:
+                    type: string
+                    format: uri
+                  expiresAt:
+                    type: string
+                    format: date-time
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /events/{eventId}/media:
+    get:
+      operationId: listMedia
+      summary: List upload, scan, and preview status
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Media states
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Media"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /events/{eventId}/media/{mediaId}/complete:
+    post:
+      operationId: completeMediaUpload
+      summary: Verify quarantine upload and enqueue scanning
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+        - $ref: "#/components/parameters/MediaId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: Scan queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Media"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /events/{eventId}/media/{mediaId}:
+    delete:
+      operationId: deleteMedia
+      summary: Detach media and schedule active-storage purge
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+        - $ref: "#/components/parameters/MediaId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "204":
+          description: Media unavailable to active product surfaces
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /creation-sessions/{sessionId}/events:
+    post:
+      operationId: recordCreationMilestone
+      summary: Record one allowlisted client milestone with server receipt time
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./product-events-v1.schema.json"
+      responses:
+        "202":
+          description: Milestone accepted
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /public/events/{slug}/metadata:
+    get:
+      operationId: getPublicEventMetadata
+      summary: Return visibility-safe metadata for Next.js canonical and OG rendering
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 64
+      responses:
+        "200":
+          description: Safe public or private-link metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicEventMetadata"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "410":
+          description: Event was deleted and is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /internal/scanner/callback:
+    post:
+      operationId: acceptScannerCallback
+      summary: Accept one signed, single-use malware scan result
+      security:
+        - scannerHmac: []
+      parameters:
+        - $ref: "#/components/parameters/ScannerTimestamp"
+        - $ref: "#/components/parameters/ScannerNonce"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScannerCallbackRequest"
+      responses:
+        "204":
+          description: Result accepted or identical terminal result already applied
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /internal/jobs/scan-dispatch:
+    post:
+      operationId: dispatchDueScanJobs
+      summary: Lease and dispatch due media scan jobs
+      security:
+        - internalOidc: []
+      responses:
+        "202":
+          description: Dispatch batch accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalJobResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /internal/jobs/retention:
+    post:
+      operationId: runRetentionJobs
+      summary: Run due draft, media, idempotency, and nonce retention
+      security:
+        - internalOidc: []
+      responses:
+        "202":
+          description: Retention batch accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalJobResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: SupabaseJWT
+      description: Short-lived Supabase access token with authenticated audience
+    scannerHmac:
+      type: apiKey
+      in: header
+      name: X-Wambe-Signature
+      description: HMAC SHA-256 over timestamp, nonce, and request body digest
+    internalOidc:
+      type: http
+      scheme: bearer
+      bearerFormat: GoogleOIDC
+      description: Google-signed OIDC token restricted to the configured scheduler service account and API audience
+  parameters:
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MediaId:
+      name: mediaId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Current integer event version
+      schema:
+        type: string
+        pattern: '^[1-9][0-9]*$'
+    ScannerTimestamp:
+      name: X-Wambe-Timestamp
+      in: header
+      required: true
+      description: UTC request time; callbacks outside the five-minute acceptance window are rejected
+      schema:
+        type: string
+        format: date-time
+    ScannerNonce:
+      name: X-Wambe-Nonce
+      in: header
+      required: true
+      description: Single-use UUID consumed atomically before media state changes
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Unauthorized:
+      description: Authentication is missing, expired, or invalid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Resource not found or not owned by this host
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Conflict:
+      description: State, version, or idempotency conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    ValidationError:
+      description: Request or publication validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    EventStatus:
+      type: string
+      enum: [draft, published, unpublished, deleted]
+    Visibility:
+      type: string
+      enum: [public, private_link, invite_only, hidden_location]
+    MediaRole:
+      type: string
+      enum: [invitation, aso_ebi]
+    MediaStatus:
+      type: string
+      enum: [quarantine, scanning, active, rejected, deleted]
+    LinkIdentityRequest:
+      type: object
+      additionalProperties: false
+      required: [provider]
+      properties:
+        provider:
+          type: string
+          enum: [google, email]
+          description: Provider identity that Supabase has already linked to the authenticated user
+    CreateEventRequest:
+      type: object
+      additionalProperties: false
+      required: [clientCreationKey, eligibility]
+      properties:
+        clientCreationKey:
+          type: string
+          format: uuid
+        eligibility:
+          type: string
+          enum: [eligible_first_time, resumed_draft, staff_assisted]
+        deviceClass:
+          type: string
+          enum: [mobile, tablet, desktop, unknown]
+        networkQuality:
+          type: string
+          enum: [good, fair, poor, unknown]
+    UpdateEventRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        eventType:
+          type: [string, "null"]
+          enum: [wedding, birthday, naming_ceremony, anniversary, graduation, housewarming, other, null]
+        title:
+          type: [string, "null"]
+          maxLength: 160
+        startsAt:
+          type: [string, "null"]
+          format: date-time
+        timezone:
+          type: string
+          default: Africa/Lagos
+        venue:
+          oneOf:
+            - $ref: "#/components/schemas/Venue"
+            - type: "null"
+        visibility:
+          oneOf:
+            - $ref: "#/components/schemas/Visibility"
+            - type: "null"
+        dressCodeNotes:
+          type: [string, "null"]
+          maxLength: 2000
+    Venue:
+      type: object
+      additionalProperties: false
+      required: [displayAddress, confirmed]
+      properties:
+        name:
+          type: [string, "null"]
+          maxLength: 160
+        displayAddress:
+          type: string
+          minLength: 1
+          maxLength: 500
+        placeId:
+          type: [string, "null"]
+          maxLength: 255
+        latitude:
+          type: [number, "null"]
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: [number, "null"]
+          minimum: -180
+          maximum: 180
+        confirmed:
+          type: boolean
+          description: Publication requires true and non-null valid coordinates
+    Event:
+      type: object
+      required: [id, ownerId, status, version, createdAt, updatedAt, shareEligible, media]
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/EventStatus"
+        version:
+          type: integer
+          minimum: 1
+        eventType:
+          type: [string, "null"]
+        title:
+          type: [string, "null"]
+        startsAt:
+          type: [string, "null"]
+          format: date-time
+        timezone:
+          type: string
+        venue:
+          oneOf:
+            - $ref: "#/components/schemas/Venue"
+            - type: "null"
+        visibility:
+          oneOf:
+            - $ref: "#/components/schemas/Visibility"
+            - type: "null"
+        dressCodeNotes:
+          type: [string, "null"]
+        slug:
+          type: [string, "null"]
+        canonicalUrl:
+          type: [string, "null"]
+          format: uri
+        shareEligible:
+          type: boolean
+        shareBlockedReason:
+          type: [string, "null"]
+        publishedAt:
+          type: [string, "null"]
+          format: date-time
+        lastSavedAt:
+          type: [string, "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        media:
+          type: array
+          items:
+            $ref: "#/components/schemas/Media"
+    EventWithSession:
+      type: object
+      required: [event, creationSessionId]
+      properties:
+        event:
+          $ref: "#/components/schemas/Event"
+        creationSessionId:
+          type: string
+          format: uuid
+    PublicEventMetadata:
+      type: object
+      additionalProperties: false
+      required: [slug, title, startsAt, visibility, indexable, canonicalUrl]
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        visibility:
+          type: string
+          enum: [public, private_link]
+        indexable:
+          type: boolean
+        canonicalUrl:
+          type: string
+          format: uri
+        invitationPreviewUrl:
+          type: [string, "null"]
+          format: uri
+        venueName:
+          type: [string, "null"]
+        venueAddress:
+          type: [string, "null"]
+    Media:
+      type: object
+      required: [id, eventId, role, filename, claimedMimeType, sizeBytes, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        role:
+          $ref: "#/components/schemas/MediaRole"
+        filename:
+          type: string
+        claimedMimeType:
+          type: string
+        detectedMimeType:
+          type: [string, "null"]
+        sizeBytes:
+          type: integer
+        status:
+          $ref: "#/components/schemas/MediaStatus"
+        rejectionCode:
+          type: [string, "null"]
+        previewUrl:
+          type: [string, "null"]
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ScannerCallbackRequest:
+      type: object
+      additionalProperties: false
+      required: [mediaId, result, detectedMimeType, objectSha256]
+      properties:
+        mediaId:
+          type: string
+          format: uuid
+        result:
+          type: string
+          enum: [clean, rejected]
+        detectedMimeType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, application/pdf, application/octet-stream]
+        objectSha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        rejectionCode:
+          type: [string, "null"]
+          enum: [malware_detected, type_mismatch, unsupported_type, corrupt_file, scan_failed, null]
+        previewQuarantinePath:
+          type: [string, "null"]
+          maxLength: 1024
+        previewSha256:
+          type: [string, "null"]
+          pattern: '^[a-f0-9]{64}$'
+      allOf:
+        - if:
+            properties:
+              result:
+                const: clean
+          then:
+            properties:
+              rejectionCode:
+                type: "null"
+        - if:
+            properties:
+              result:
+                const: rejected
+          then:
+            required: [rejectionCode]
+            properties:
+              rejectionCode:
+                type: string
+                enum: [malware_detected, type_mismatch, unsupported_type, corrupt_file, scan_failed]
+    InternalJobResult:
+      type: object
+      additionalProperties: false
+      required: [job, acceptedAt, examined, affected]
+      properties:
+        job:
+          type: string
+          enum: [scan_dispatch, retention]
+        acceptedAt:
+          type: string
+          format: date-time
+        examined:
+          type: integer
+          minimum: 0
+        affected:
+          type: integer
+          minimum: 0
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string
+            fieldErrors:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string

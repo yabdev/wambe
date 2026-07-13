@@ -1,0 +1,48 @@
+.wrapper {
+  display: grid;
+  gap: 20px;
+}
+
+.zones {
+  display: grid;
+  gap: 14px;
+}
+
+.zone {
+  display: flex;
+  min-height: 126px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  border: 1px dashed #c7b5a4;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.zone > div {
+  display: grid;
+  gap: 7px;
+}
+
+.status {
+  width: fit-content;
+  color: var(--warning);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.status[data-status="active"] {
+  color: var(--green);
+}
+
+.status[data-status="rejected"] {
+  color: var(--danger);
+}
+
+@media (max-width: 560px) {
+  .zone {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

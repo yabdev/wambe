@@ -1,0 +1,10 @@
+{
+  "name": "Wambe",
+  "short_name": "Wambe",
+  "description": "Create and share a beautiful celebration invitation.",
+  "start_url": "/events",
+  "display": "standalone",
+  "background_color": "#f6f0e8",
+  "theme_color": "#b84639",
+  "icons": []
+}

@@ -1,0 +1,128 @@
+.wrapper {
+  display: grid;
+  gap: 18px;
+}
+
+.map {
+  min-height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(90deg, transparent 49%, rgb(110 99 93 / 10%) 50%, transparent 51%),
+    linear-gradient(transparent 49%, rgb(110 99 93 / 10%) 50%, transparent 51%),
+    var(--surface-soft);
+  background-size: 46px 46px;
+}
+
+.mapFallback {
+  display: grid;
+  min-height: 280px;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 30px;
+  text-align: center;
+}
+
+.mapFallback span:last-child {
+  max-width: 33ch;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.findAddress {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pinControls {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.pinControls legend {
+  padding-inline: 6px;
+  font-weight: 800;
+}
+
+.pinControls > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nudge {
+  min-width: 72px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.nudge:hover {
+  border-color: var(--coral);
+  color: var(--coral-dark);
+}
+
+.nudge:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.pin {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 50% 50% 50% 10%;
+  background: var(--coral);
+  color: white;
+  font-size: 1rem;
+  transform: rotate(-45deg);
+}
+
+.pin::first-letter {
+  transform: rotate(45deg);
+}
+
+.confirmRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.confirmRow > div {
+  display: grid;
+  gap: 4px;
+}
+
+.confirmRow span {
+  font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .map {
+    min-height: 230px;
+  }
+
+  .confirmRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,89 @@
+.page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 10% 10%, rgb(195 147 66 / 25%), transparent 23rem),
+    #6e2925;
+}
+
+.invitation {
+  position: relative;
+  display: grid;
+  width: min(100%, 720px);
+  min-height: min(88vh, 820px);
+  place-content: center;
+  justify-items: center;
+  gap: 22px;
+  overflow: hidden;
+  padding: clamp(32px, 9vw, 90px);
+  border: 1px solid rgb(255 255 255 / 32%);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 34px 90px rgb(25 7 5 / 36%);
+  text-align: center;
+}
+
+.invitation::before,
+.invitation::after {
+  position: absolute;
+  width: 330px;
+  height: 430px;
+  border: 1px solid rgb(184 70 57 / 22%);
+  border-radius: 50% 50% 0 0;
+  content: "";
+}
+
+.invitation::before {
+  top: -270px;
+  left: -190px;
+  transform: rotate(28deg);
+}
+
+.invitation::after {
+  right: -220px;
+  bottom: -310px;
+  transform: rotate(-24deg);
+}
+
+.invitation h1 {
+  z-index: 1;
+  max-width: 11ch;
+  font-size: clamp(3.2rem, 11vw, 7rem);
+}
+
+.rule {
+  color: var(--gold);
+  font-size: 1.4rem;
+}
+
+.invitation time {
+  max-width: 34ch;
+  color: var(--coral-dark);
+  font-weight: 750;
+}
+
+.invitation address {
+  display: grid;
+  gap: 4px;
+  font-style: normal;
+}
+
+.invitation address span {
+  color: var(--muted);
+}
+
+.invitation footer {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 44px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.invitation footer strong {
+  color: var(--ink);
+  font-size: 1.2rem;
+}

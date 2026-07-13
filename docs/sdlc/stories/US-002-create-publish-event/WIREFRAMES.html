@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>US-002 complete responsive wireframe board</title>
+  <style>
+    :root {
+      --page: #ececec;
+      --paper: #fff;
+      --ink: #171717;
+      --muted: #666;
+      --line: #aaa;
+      --soft: #f2f2f2;
+      --dark: #333;
+      --error: #555;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font: 14px/1.4 Arial, Helvetica, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    .board-header {
+      padding: 34px clamp(18px, 4vw, 56px);
+      border-bottom: 3px solid var(--ink);
+      background: var(--paper);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 8px; font-size: clamp(30px, 5vw, 58px); line-height: 1; }
+    h2 { margin-bottom: 18px; font-size: 28px; }
+    h3 { font-size: 18px; }
+    .muted { color: var(--muted); }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .tag {
+      padding: 5px 8px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: var(--paper);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .flow {
+      overflow-x: auto;
+      padding: 22px clamp(18px, 4vw, 56px);
+      border-bottom: 1px solid var(--line);
+      background: #ddd;
+      white-space: nowrap;
+    }
+
+    .flow-node {
+      display: inline-block;
+      min-width: 120px;
+      padding: 10px 12px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: var(--paper);
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .arrow { display: inline-block; padding: 0 8px; font-size: 20px; }
+
+    .section {
+      padding: 42px clamp(18px, 4vw, 56px) 56px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .section-head p { max-width: 620px; }
+
+    .screen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(292px, 1fr));
+      gap: 22px;
+    }
+
+    .screen-card {
+      min-width: 0;
+      border: 2px solid var(--ink);
+      border-radius: 14px;
+      background: var(--paper);
+      box-shadow: 6px 6px 0 #c4c4c4;
+    }
+
+    .screen-label {
+      display: flex;
+      min-height: 52px;
+      padding: 10px 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 2px solid var(--ink);
+      background: var(--dark);
+      color: #fff;
+    }
+
+    .screen-id { font-weight: 800; letter-spacing: .05em; }
+    .screen-state { font-size: 10px; text-transform: uppercase; }
+
+    .phone {
+      min-height: 560px;
+      padding: 15px;
+      background: var(--paper);
+    }
+
+    .mobile-bar {
+      display: flex;
+      min-height: 34px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px;
+    }
+
+    .screen-title { margin: 24px 0 18px; }
+    .screen-title h3 { margin-bottom: 5px; }
+
+    .item { margin-bottom: 12px; }
+    .item-label { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 800; }
+
+    .field, .placeholder, .notice, .alert, .choice, .file, .summary, .skeleton {
+      min-height: 42px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+    }
+
+    .field.error { border: 2px solid var(--error); }
+    .field-error { margin-top: 4px; font-size: 11px; font-weight: 700; text-decoration: underline; }
+    .notice { border-style: dashed; background: var(--soft); }
+    .alert { border: 2px solid var(--ink); background: #e2e2e2; font-weight: 700; }
+    .alert.error { border-style: double; border-width: 4px; }
+    .summary { background: var(--soft); }
+    .summary div { padding: 4px 0; border-bottom: 1px solid #ccc; }
+    .summary div:last-child { border-bottom: 0; }
+
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .choice.selected { border: 3px solid var(--ink); background: #ddd; }
+    .choice::before { margin-right: 7px; content: "○"; }
+    .choice.selected::before { content: "●"; }
+
+    .map {
+      position: relative;
+      height: 150px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background:
+        linear-gradient(35deg, transparent 45%, #bbb 46%, #bbb 48%, transparent 49%),
+        linear-gradient(-25deg, transparent 42%, #ccc 43%, #ccc 46%, transparent 47%),
+        #e4e4e4;
+      background-size: 90px 70px, 120px 85px, auto;
+    }
+
+    .map::after {
+      position: absolute;
+      top: 56px;
+      left: 52%;
+      width: 20px;
+      height: 20px;
+      border: 5px solid var(--ink);
+      border-radius: 50% 50% 50% 0;
+      background: #fff;
+      transform: rotate(-45deg);
+      content: "";
+    }
+
+    .upload {
+      min-height: 95px;
+      padding: 20px 10px;
+      border: 2px dashed var(--line);
+      border-radius: 7px;
+      background: var(--soft);
+      text-align: center;
+    }
+
+    .progress { height: 10px; margin-top: 8px; border: 1px solid var(--ink); background: #fff; }
+    .progress span { display: block; width: var(--value, 45%); height: 100%; background: #777; }
+    .skeleton { overflow: hidden; background: linear-gradient(90deg, #ddd, #f5f5f5, #ddd); color: transparent; }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .actions.one { grid-template-columns: 1fr; }
+
+    .button {
+      min-height: 42px;
+      padding: 8px;
+      border: 2px solid var(--ink);
+      border-radius: 7px;
+      background: var(--paper);
+      font-weight: 800;
+    }
+
+    .button.primary { background: var(--dark); color: #fff; }
+    .button.danger { border-style: double; border-width: 4px; }
+    .button[disabled] { color: var(--muted); background: #ddd; }
+
+    .annotation {
+      min-height: 88px;
+      padding: 11px 12px;
+      border-top: 1px dashed var(--line);
+      background: #f5f5f5;
+      font-size: 11px;
+    }
+
+    .annotation strong { display: inline-block; min-width: 48px; }
+
+    .desktop-grid { display: grid; gap: 28px; }
+
+    .desktop-frame {
+      overflow: hidden;
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      background: var(--paper);
+      box-shadow: 8px 8px 0 #c4c4c4;
+    }
+
+    .desktop-label { padding: 10px 14px; border-bottom: 2px solid var(--ink); color: #fff; background: var(--dark); font-weight: 800; }
+    .desktop-shell { display: grid; grid-template-columns: 190px 1fr; min-height: 430px; }
+    .desktop-nav { padding: 20px 14px; border-right: 2px solid var(--ink); background: var(--soft); }
+    .desktop-nav .placeholder { margin-bottom: 8px; }
+    .desktop-main { padding: 24px; }
+    .desktop-columns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(240px, .8fr); gap: 24px; }
+    .desktop-preview { min-height: 300px; padding: 18px; border: 2px solid var(--ink); border-radius: 9px; background: var(--soft); }
+    .desktop-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .desktop-card { min-height: 150px; padding: 14px; border: 1px solid var(--ink); border-radius: 8px; }
+
+    .dialog-backdrop {
+      position: relative;
+      min-height: 340px;
+      padding: 70px 20px;
+      background: repeating-linear-gradient(45deg, #ddd, #ddd 8px, #e8e8e8 8px, #e8e8e8 16px);
+    }
+
+    .dialog {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 22px;
+      border: 3px solid var(--ink);
+      border-radius: 9px;
+      background: #fff;
+      box-shadow: 8px 8px 0 #888;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      padding: 22px clamp(18px, 4vw, 56px);
+      border-top: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .legend-item { padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+
+    @media (max-width: 850px) {
+      .section-head { display: block; }
+      .desktop-shell { grid-template-columns: 1fr; }
+      .desktop-nav { display: none; }
+      .desktop-columns { grid-template-columns: 1fr; }
+      .desktop-cards { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .screen-grid { grid-template-columns: 1fr; }
+      .desktop-cards { grid-template-columns: 1fr; }
+      .desktop-main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="board-header">
+    <p class="muted"><strong>US-002 · Durable UX deliverable</strong></p>
+    <h1>Complete responsive wireframe board</h1>
+    <p>Every required host screen and material state for authentication, event creation, publication, sharing, and lifecycle management. Low fidelity by design.</p>
+    <div class="meta">
+      <span class="tag">39 mobile/state frames</span>
+      <span class="tag">8 desktop frames</span>
+      <span class="tag">Responsive parity</span>
+      <span class="tag">Focus annotations</span>
+      <span class="tag">Acceptance-criteria trace</span>
+    </div>
+  </header>
+
+  <nav class="flow" aria-label="Primary user flow">
+    <span class="flow-node">Entry</span><span class="arrow">→</span>
+    <span class="flow-node">Authenticate</span><span class="arrow">→</span>
+    <span class="flow-node">My Wambes</span><span class="arrow">→</span>
+    <span class="flow-node">1 · Basics</span><span class="arrow">→</span>
+    <span class="flow-node">2 · Venue</span><span class="arrow">→</span>
+    <span class="flow-node">3 · Style</span><span class="arrow">→</span>
+    <span class="flow-node">4 · Privacy</span><span class="arrow">→</span>
+    <span class="flow-node">Publish</span><span class="arrow">→</span>
+    <span class="flow-node">Share / Manage</span>
+  </nav>
+
+  <main id="mobile-board"></main>
+
+  <section class="section" id="desktop-board">
+    <div class="section-head">
+      <div><p class="muted"><strong>Desktop parity · 1024 px and above</strong></p><h2>Wide-layout frames</h2></div>
+      <p class="muted">Desktop preserves screen meaning, state feedback, field order, and acceptance criteria. It adds persistent navigation and contextual preview space.</p>
+    </div>
+    <div class="desktop-grid" id="desktop-frames"></div>
+  </section>
+
+  <aside class="legend">
+    <div class="legend-item"><strong>Heavy outline</strong><br><span class="muted">Current selection, alert, focus target, or blocking region.</span></div>
+    <div class="legend-item"><strong>Dashed outline</strong><br><span class="muted">Optional upload, informational boundary, or unresolved media.</span></div>
+    <div class="legend-item"><strong>Grey fill</strong><br><span class="muted">System feedback, loading, disabled, or secondary content.</span></div>
+    <div class="legend-item"><strong>Annotations</strong><br><span class="muted">Initial focus, live feedback, keyboard behavior, and AC trace.</span></div>
+  </aside>
+
+  <script>
+    const F = (label, value = "", error = "") => ({ type: "field", label, value, error });
+    const A = (text, error = false) => ({ type: "alert", text, error });
+    const N = text => ({ type: "notice", text });
+    const C = (label, options, selected = 0) => ({ type: "choices", label, options, selected });
+    const M = (label = "Map and confirmed pin") => ({ type: "map", label });
+    const U = (label, detail = "JPG, PNG, WebP or PDF · up to 10 MB") => ({ type: "upload", label, detail });
+    const P = (label, value = 45) => ({ type: "progress", label, value });
+    const S = rows => ({ type: "summary", rows });
+    const K = text => ({ type: "skeleton", text });
+
+    const screens = [
+      { group:"Authentication", id:"AUTH-01", title:"Choose how to continue", state:"Default", focus:"Page heading → Google", ac:"AC-001", items:[N("One trusted link for your celebration"), F("Email address", "you@example.com")], actions:["Continue with Google","Continue with email"] },
+      { group:"Authentication", id:"AUTH-02", title:"Create an account", state:"Email registration", focus:"Email field", ac:"AC-001", items:[F("Email"),F("Password","••••••••"),F("Confirm password","••••••••"),N("Verify your email before sign-in")], actions:["Back","Create account"] },
+      { group:"Authentication", id:"AUTH-03", title:"Create an account", state:"Validation errors", focus:"Error summary → Email", ac:"AC-001", items:[A("Fix 2 fields before continuing",true),F("Email","amina@","Enter a valid email"),F("Password","•••","Use at least the required length")], actions:["Back","Create account"] },
+      { group:"Authentication", id:"AUTH-04", title:"Check your email", state:"Verification pending", focus:"Verification heading", ac:"AC-001", items:[N("We sent a verification link to a••••@example.com"),N("Didn't receive it? Resend available in 00:28")], actions:["Change email","Resend link"] },
+      { group:"Authentication", id:"AUTH-05", title:"Welcome back", state:"Email sign-in", focus:"Email field", ac:"AC-001", items:[F("Email"),F("Password","••••••••"),N("Forgot password?")], actions:["Google sign-in","Sign in"] },
+      { group:"Authentication", id:"AUTH-06", title:"Welcome back", state:"Neutral sign-in error", focus:"Error alert", ac:"AC-001 · AC-011", items:[A("We couldn't sign you in with those details.",true),F("Email","amina@example.com"),F("Password","••••••••")], actions:["Reset password","Try again"] },
+      { group:"Authentication", id:"AUTH-07", title:"Reset your password", state:"Request", focus:"Email field", ac:"AC-001", items:[F("Email","amina@example.com"),N("We'll send reset instructions if this address is eligible.")], actions:["Back to sign in","Send reset link"] },
+      { group:"Authentication", id:"AUTH-08", title:"Check your email", state:"Reset confirmation", focus:"Confirmation heading", ac:"AC-001", items:[N("If an account matches, reset instructions are on the way."),N("The message may take a few minutes.")], actions:["Return to sign in"] },
+      { group:"Authentication", id:"AUTH-09", title:"Sign-in interrupted", state:"OAuth cancel/error", focus:"Message heading", ac:"AC-001", items:[A("Google sign-in wasn't completed. Nothing was changed."),N("Try Google again or continue with email.")], actions:["Use email","Try Google again"] },
+      { group:"Authentication", id:"SYS-01", title:"You can't open this event", state:"Permission denied", focus:"Message heading", ac:"AC-011", items:[A("Return to your events or sign in with the correct account.",true),N("No event ownership or private details are disclosed.")], actions:["Sign in","My Wambes"] },
+
+      { group:"My Wambes", id:"HOME-01", title:"My Wambes", state:"Loading", focus:"Page heading · Busy announced", ac:"NFR-004", items:[K("Loading event card"),K("Loading event card"),K("Loading event card")], actions:[] },
+      { group:"My Wambes", id:"HOME-02", title:"Your celebrations live here", state:"Empty", focus:"Page heading", ac:"FR-002", items:[N("Create your first Wambe and share one trusted link."),N("No drafts or published events yet.")], actions:["Create your first Wambe"] },
+      { group:"My Wambes", id:"HOME-03", title:"My Wambes", state:"Drafts and published", focus:"Page heading", ac:"FR-002 · FR-010", items:[S([["Draft","Housewarming · saved 8 min ago"],["Published","Amina & Tunde · 24 Oct"],["Published","Mum's 60th · 14 Nov"]])], actions:["Open selected","Create a Wambe"] },
+
+      { group:"Creation shell", id:"EDIT-00", title:"Loading your draft", state:"Loading", focus:"Editor heading · Busy announced", ac:"AC-002", items:[K("Step progress"),K("Field group"),K("Action area")], actions:["Return to My Wambes"] },
+      { group:"Creation shell", id:"SAVE-01", title:"Tell us about the celebration", state:"Saving → Saved", focus:"Step heading", ac:"AC-002", status:"Saving… / Saved", items:[F("Event title","Amina & Tunde's Wedding"),N("Persistent save status is near the heading.")], actions:["Back","Continue"] },
+      { group:"Creation shell", id:"SAVE-02", title:"Tell us about the celebration", state:"Autosave failed", focus:"Save alert", ac:"AC-002 · NFR-004", status:"Couldn't save", items:[A("Your latest changes aren't saved. Retry.",true),F("Event title","Amina & Tunde's Wedding")], actions:["Exit","Retry save"] },
+      { group:"Creation shell", id:"SAVE-03", title:"You're offline", state:"Not saved", focus:"Offline banner", ac:"NFR-004", status:"Not saved", items:[A("Keep this page open. We'll retry when you're connected.",true),F("Event title","Amina & Tunde's Wedding")], actions:["Exit","Retry now"] },
+      { group:"Creation shell", id:"SAVE-04", title:"Leave with unsaved changes?", state:"Confirmation dialog", focus:"Stay on page · Focus trapped", ac:"NFR-004", items:[A("Your latest changes may be lost.",true),N("Escape closes this dialog and returns focus to Exit.")], actions:["Leave anyway","Stay on page"] },
+
+      { group:"Step 1 · Basics", id:"EDIT-01", title:"Tell us about the celebration", state:"Default", focus:"Step heading", ac:"FR-003 · FR-004", status:"Saved", items:[C("Event type",["Wedding","Birthday","Naming","Other"],0),F("Event title","Amina & Tunde's Wedding"),F("Date","24 October 2026"),F("Time","2:00 PM")], actions:["Back","Continue"] },
+      { group:"Step 1 · Basics", id:"EDIT-02", title:"Tell us about the celebration", state:"Validation errors", focus:"Error summary → Title", ac:"AC-003", status:"Saved", items:[A("Fix 2 fields before continuing",true),C("Event type",["Wedding","Birthday","Naming","Other"],0),F("Event title","","Enter an event title"),F("Date","Yesterday","Choose a future date")], actions:["Back","Continue"] },
+
+      { group:"Step 2 · Venue", id:"EDIT-03", title:"Where is the celebration?", state:"Search", focus:"Address search", ac:"FR-007", status:"Saving…", items:[F("Search or enter address","Civic Centre"),S([["Result","Civic Centre, Victoria Island"],["Result","Civic Centre Annex, Lagos"]]),N("A typed address is incomplete until a pin is confirmed.")], actions:["Back","Select result"] },
+      { group:"Step 2 · Venue", id:"EDIT-04", title:"Confirm the venue", state:"Pin confirmed", focus:"Confirmation announced", ac:"AC-005", status:"Saved", items:[M(),N("Pin confirmed · Ozumba Mbadiwe Ave, Lagos"),F("Venue name","Civic Centre")], actions:["Change pin","Continue"] },
+      { group:"Step 2 · Venue", id:"EDIT-05", title:"Where is the celebration?", state:"Map/search error", focus:"Map error alert", ac:"AC-005", status:"Saved", items:[F("Address","Civic Centre, Victoria Island"),A("The map couldn't load. Your address is still here.",true),N("A confirmed pin is required before publication.")], actions:["Back","Retry map"] },
+
+      { group:"Step 3 · Invitation and style", id:"EDIT-06", title:"Make it feel like yours", state:"Empty / optional", focus:"Step heading", ac:"FR-003 · FR-005", status:"Saved", items:[U("Add invitation"),U("Add Aso-Ebi images"),F("Dress-code or Aso-Ebi notes")], actions:["Skip for now","Continue"] },
+      { group:"Step 3 · Invitation and style", id:"EDIT-07", title:"Make it feel like yours", state:"Upload and scan progress", focus:"File status announced", ac:"AC-006", status:"Saving…", items:[P("Uploading invitation.pdf",62),P("Scanning fabric.jpg",35),N("Other editor controls remain available.")], actions:["Cancel selected file","Continue"] },
+      { group:"Step 3 · Invitation and style", id:"EDIT-08", title:"Make it feel like yours", state:"Upload success", focus:"Success announced", ac:"AC-006", status:"Saved", items:[S([["PDF","invitation.pdf · 2.8 MB"],["Status","Scanned and ready"],["Image","aso-ebi-green.webp · 1.4 MB"]]),F("Alt description","Emerald fabric with gold pattern")], actions:["Remove selected","Continue"] },
+      { group:"Step 3 · Invitation and style", id:"EDIT-09", title:"Make it feel like yours", state:"Upload rejected", focus:"File error alert", ac:"AC-006", status:"Saved", items:[A("video.mp4 wasn't added. Use JPG, PNG, WebP or PDF up to 10 MB.",true),N("The draft and successful files remain unchanged."),U("Choose a replacement")], actions:["Remove error","Choose file"] },
+
+      { group:"Step 4 · Privacy and publish", id:"EDIT-10", title:"Who can see this event?", state:"Default and review", focus:"Step heading", ac:"FR-006 · AC-007", status:"Saved", items:[C("Visibility",["Public","Private link","Invite-only","Hidden location"],1),S([["Event","Amina & Tunde"],["When","24 Oct · 2:00 PM"],["Venue","Civic Centre, Lagos"]])], actions:["Back","Publish Wambe"] },
+      { group:"Step 4 · Privacy and publish", id:"EDIT-11", title:"Protected access needs setup", state:"Capability warning", focus:"Warning heading", ac:"BR-006", status:"Saved", items:[C("Visibility",["Public","Private link","Invite-only","Hidden location"],2),A("Guest access is required before this mode can be shared.",true),N("Protected details must not be exposed before capability readiness.")], actions:["Choose another mode","Save selection"] },
+      { group:"Step 4 · Privacy and publish", id:"EDIT-12", title:"Review before publishing", state:"Linked validation summary", focus:"Error summary", ac:"AC-003 · AC-005", status:"Saved", items:[A("2 things need attention",true),S([["Basics","Event date must be in the future"],["Venue","Confirm a map pin"]]),N("Each error links to its field and retains all entered data.")], actions:["Back","Go to first error"] },
+      { group:"Step 4 · Privacy and publish", id:"EDIT-13", title:"Publishing your Wambe", state:"Progress / duplicate-safe", focus:"Progress announced", ac:"AC-008 · AC-014", status:"Publishing…", items:[P("Validating and publishing",78),S([["Link","Creating stable Wambe URL"],["Draft","All changes retained"]])], actions:["Back","Publishing…"], disabled:true },
+      { group:"Step 4 · Privacy and publish", id:"EDIT-14", title:"We couldn't publish yet", state:"Publish failure", focus:"Error alert", ac:"AC-008 · NFR-004", status:"Saved", items:[A("Your draft is safe. Retry publication or review your details.",true),N("Reference: PUB-RETRY · no duplicate event created"),S([["Event","Amina & Tunde"],["Visibility","Private link"]])], actions:["Review details","Retry publish"] },
+
+      { group:"Publication and sharing", id:"PUB-01", title:"Your celebration has a digital home", state:"Published", focus:"Success heading", ac:"AC-008 · AC-009", items:[N("Published · Private link"),F("Canonical Wambe link","wambe.africa/e/amina-tunde-8x4k"),S([["Next","Share one trusted link"],["URL","Stable after edits"]])], actions:["Copy link","Share on WhatsApp"] },
+      { group:"Publication and sharing", id:"PUB-02", title:"Your celebration has a digital home", state:"Link copied", focus:"Copied announced politely", ac:"AC-009", items:[A("Copied to clipboard"),F("Canonical Wambe link","wambe.africa/e/amina-tunde-8x4k"),N("Feedback is visible and not colour-only.")], actions:["View event","Share on WhatsApp"] },
+
+      { group:"Event management", id:"MAN-01", title:"Amina & Tunde's Wedding", state:"Published management", focus:"Page heading", ac:"FR-010", items:[N("Published · Private link"),S([["When","24 October · 2:00 PM"],["Venue","Civic Centre, Lagos"],["Link","Stable Wambe URL"]]),N("Actions: View · Edit · Share · More")], actions:["Edit event","Share"] },
+      { group:"Event management", id:"MAN-02", title:"Unpublish this event?", state:"Confirmation dialog", focus:"Cancel first · Focus trapped", ac:"AC-010", items:[A("Amina & Tunde's Wedding will stop appearing as published.",true),N("The stable URL is retained for future republishing.")], actions:["Cancel","Unpublish"] },
+      { group:"Event management", id:"MAN-03", title:"Amina & Tunde's Wedding", state:"Unpublished", focus:"Status heading", ac:"AC-010", items:[A("This event is unpublished."),N("Guests cannot access it as a published event."),S([["Last published","12 July 2026"],["Link","Reserved"]])], actions:["Delete","Edit and republish"] },
+      { group:"Event management", id:"MAN-04", title:"Delete this event?", state:"Destructive confirmation", focus:"Cancel first · Focus trapped", ac:"AC-010 · AC-012", items:[A("Delete Amina & Tunde's Wedding?",true),N("It disappears from active service immediately. Active backend data is purged within 30 days."),N("This action cannot be undone from the product.")], actions:["Cancel","Delete event"], danger:true },
+      { group:"Event management", id:"MAN-05", title:"Event deleted", state:"Confirmation", focus:"Confirmation heading", ac:"AC-010 · AC-012", items:[N("Amina & Tunde's Wedding is no longer available in active product surfaces."),N("Backend purge completes within the approved retention period.")], actions:["Return to My Wambes"] }
+    ];
+
+    const desktopFrames = [
+      { id:"DESK-01", title:"Authentication choice", kind:"auth", state:"Default", focus:"Heading → Google", ac:"AC-001" },
+      { id:"DESK-02", title:"My Wambes", kind:"home", state:"Populated", focus:"Page heading", ac:"FR-002 · FR-010" },
+      { id:"DESK-03", title:"Basics editor", kind:"editor", state:"Default", focus:"Step heading", ac:"FR-003 · FR-004" },
+      { id:"DESK-04", title:"Venue editor", kind:"venue", state:"Confirmed", focus:"Confirmation announced", ac:"AC-005" },
+      { id:"DESK-05", title:"Invitation and style", kind:"style", state:"Upload success", focus:"Step heading", ac:"AC-006" },
+      { id:"DESK-06", title:"Privacy and review", kind:"privacy", state:"Default", focus:"Step heading", ac:"AC-007" },
+      { id:"DESK-07", title:"Published management", kind:"manage", state:"Published", focus:"Page heading", ac:"FR-010" },
+      { id:"DESK-08", title:"Delete event", kind:"dialog", state:"Confirmation", focus:"Cancel first · trapped", ac:"AC-010 · AC-012" }
+    ];
+
+    const renderItem = item => {
+      if (item.type === "field") return `<div class="item"><span class="item-label">${item.label}</span><div class="field ${item.error ? "error" : ""}">${item.value || " "}</div>${item.error ? `<div class="field-error">${item.error}</div>` : ""}</div>`;
+      if (item.type === "alert") return `<div class="item alert ${item.error ? "error" : ""}" role="alert">${item.text}</div>`;
+      if (item.type === "notice") return `<div class="item notice">${item.text}</div>`;
+      if (item.type === "choices") return `<div class="item"><span class="item-label">${item.label}</span><div class="choices">${item.options.map((option,index)=>`<div class="choice ${index===item.selected?"selected":""}">${option}</div>`).join("")}</div></div>`;
+      if (item.type === "map") return `<div class="item"><span class="item-label">${item.label}</span><div class="map"></div></div>`;
+      if (item.type === "upload") return `<div class="item upload"><strong>＋ ${item.label}</strong><br><span class="muted">${item.detail}</span></div>`;
+      if (item.type === "progress") return `<div class="item notice"><strong>${item.label}</strong><div class="progress" style="--value:${item.value}%"><span></span></div></div>`;
+      if (item.type === "summary") return `<div class="item summary">${item.rows.map(row=>`<div><strong>${row[0]}:</strong> ${row[1]}</div>`).join("")}</div>`;
+      if (item.type === "skeleton") return `<div class="item skeleton">${item.text}</div>`;
+      return "";
+    };
+
+    const groups = [...new Set(screens.map(screen => screen.group))];
+    const mobileBoard = document.querySelector("#mobile-board");
+    mobileBoard.innerHTML = groups.map(group => {
+      const groupScreens = screens.filter(screen => screen.group === group);
+      return `<section class="section"><div class="section-head"><div><p class="muted"><strong>Mobile / state frames</strong></p><h2>${group}</h2></div><p class="muted">${groupScreens.length} required frame${groupScreens.length === 1 ? "" : "s"} with material feedback, focus, and AC trace.</p></div><div class="screen-grid">${groupScreens.map(screen => `
+        <article class="screen-card" aria-label="${screen.id} ${screen.title}">
+          <div class="screen-label"><span class="screen-id">${screen.id}</span><span class="screen-state">${screen.state}</span></div>
+          <div class="phone">
+            <div class="mobile-bar"><span>Exit / Back</span><strong>Wambe</strong><span>${screen.status || " "}</span></div>
+            <div class="screen-title"><h3>${screen.title}</h3><div class="muted">${screen.state}</div></div>
+            ${screen.items.map(renderItem).join("")}
+            ${screen.actions.length ? `<div class="actions ${screen.actions.length === 1 ? "one" : ""}">${screen.actions.map((action,index)=>`<button class="button ${index===screen.actions.length-1?"primary":""} ${screen.danger&&index===screen.actions.length-1?"danger":""}" ${screen.disabled&&index===screen.actions.length-1?"disabled":""}>${action}</button>`).join("")}</div>` : ""}
+          </div>
+          <div class="annotation"><div><strong>Focus:</strong> ${screen.focus}</div><div><strong>Trace:</strong> ${screen.ac}</div><div><strong>Mobile:</strong> Single column · 44 px targets · persistent feedback</div></div>
+        </article>`).join("")}</div></section>`;
+    }).join("");
+
+    const editorBody = kind => {
+      if (kind === "auth") return `<div style="max-width:460px;margin:50px auto"><h3>Create and share in minutes</h3>${renderItem(F("Email address"))}<div class="actions one"><button class="button primary">Continue with Google</button><button class="button">Continue with email</button></div></div>`;
+      if (kind === "home") return `<h3>My Wambes</h3><div class="desktop-cards"><div class="desktop-card"><strong>Draft</strong><h3>Housewarming</h3><span class="muted">Continue editing</span></div><div class="desktop-card"><strong>Published</strong><h3>Amina & Tunde</h3><span class="muted">View · Edit · Share</span></div><div class="desktop-card"><strong>Published</strong><h3>Mum's 60th</h3><span class="muted">View · Edit · Share</span></div></div>`;
+      if (kind === "venue") return `<div class="desktop-columns"><div><h3>Where is the celebration?</h3>${renderItem(F("Search address","Civic Centre, Victoria Island"))}${renderItem(M())}${renderItem(N("Pin confirmed · Lagos"))}</div><div class="desktop-preview"><strong>Event preview</strong><div class="placeholder" style="margin-top:14px;height:220px">Venue and event summary</div></div></div>`;
+      if (kind === "style") return `<div class="desktop-columns"><div><h3>Make it feel like yours</h3><div class="desktop-cards"><div class="upload">＋ Invitation</div><div class="upload">＋ Aso-Ebi</div></div>${renderItem(S([["PDF","invitation.pdf"],["Status","Scanned and ready"]]))}${renderItem(F("Dress-code notes","Emerald green and gold"))}</div><div class="desktop-preview"><strong>Guest preview</strong><div class="placeholder" style="margin-top:14px;height:260px">Invitation artwork preview</div></div></div>`;
+      if (kind === "privacy") return `<div class="desktop-columns"><div><h3>Who can see this event?</h3>${renderItem(C("Visibility",["Public","Private link","Invite-only","Hidden location"],1))}</div><div class="desktop-preview"><strong>Review</strong>${renderItem(S([["Event","Amina & Tunde"],["When","24 Oct · 2 PM"],["Venue","Civic Centre"]]))}<button class="button primary" style="width:100%">Publish Wambe</button></div></div>`;
+      if (kind === "manage") return `<h3>Amina & Tunde's Wedding</h3>${renderItem(N("Published · Private link"))}<div class="desktop-columns"><div>${renderItem(S([["When","24 October · 2 PM"],["Venue","Civic Centre, Lagos"],["Link","Stable Wambe URL"]]))}<div class="actions"><button class="button">Edit event</button><button class="button primary">Share</button></div></div><div class="desktop-preview">Event preview and status</div></div>`;
+      if (kind === "dialog") return `<div class="dialog-backdrop"><div class="dialog" role="dialog"><h3>Delete this event?</h3><p>Amina & Tunde's Wedding disappears from active service immediately. Backend purge completes within 30 days.</p><div class="actions"><button class="button">Cancel</button><button class="button danger">Delete event</button></div></div></div>`;
+      return `<div class="desktop-columns"><div><h3>Tell us about the celebration</h3>${renderItem(C("Event type",["Wedding","Birthday","Naming","Other"],0))}${renderItem(F("Event title","Amina & Tunde's Wedding"))}${renderItem(F("Date and time","24 October 2026 · 2 PM"))}<div class="actions"><button class="button">Back</button><button class="button primary">Continue</button></div></div><div class="desktop-preview"><strong>Guest preview</strong><div class="placeholder" style="margin-top:14px;height:240px">Contextual event preview</div></div></div>`;
+    };
+
+    document.querySelector("#desktop-frames").innerHTML = desktopFrames.map(frame => `
+      <article class="desktop-frame" aria-label="${frame.id} ${frame.title}">
+        <div class="desktop-label">${frame.id} · ${frame.title} · ${frame.state}</div>
+        <div class="desktop-shell">
+          <aside class="desktop-nav"><strong>Wambe</strong><div class="placeholder" style="margin-top:28px">My Wambes</div><div class="placeholder">Create event</div><div class="placeholder">Profile</div></aside>
+          <div class="desktop-main">${editorBody(frame.kind)}</div>
+        </div>
+        <div class="annotation"><strong>Focus:</strong> ${frame.focus} &nbsp;·&nbsp; <strong>Trace:</strong> ${frame.ac} &nbsp;·&nbsp; Same fields, state semantics, and task order as mobile.</div>
+      </article>`).join("");
+  </script>
+</body>
+</html>

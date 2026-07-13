@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>US-002 Wambe responsive wireframes</title>
+  <style>
+    :root {
+      --canvas: #f5f0e8;
+      --paper: #fffdf9;
+      --ink: #201c1a;
+      --muted: #6f6863;
+      --line: #d9d1c8;
+      --brand: #b64b3f;
+      --brand-soft: #f5dfd9;
+      --gold: #b98737;
+      --success: #28765a;
+      --danger: #a73535;
+      --shadow: 0 18px 48px rgb(45 34 26 / 12%);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, #f8dfd8 0, transparent 24rem),
+        var(--canvas);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .page-header {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 48px 32px 24px;
+    }
+
+    .eyebrow {
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, .brand {
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    h1 { max-width: 760px; margin-bottom: 10px; font-size: clamp(36px, 6vw, 68px); line-height: 1; }
+    h2 { margin-bottom: 18px; font-size: 30px; }
+    h3 { font-size: 20px; }
+    .lede { max-width: 760px; color: var(--muted); }
+
+    .section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 32px 56px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .note {
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .mobile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 24px;
+    }
+
+    .phone {
+      min-height: 700px;
+      overflow: hidden;
+      border: 10px solid #292421;
+      border-radius: 36px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .phone-label {
+      padding: 12px 18px;
+      color: #fff;
+      background: #292421;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .phone-screen { padding: 20px; }
+
+    .topbar, .row, .actions, .event-top, .save-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar, .event-top, .save-row { justify-content: space-between; }
+    .brand { font-size: 26px; font-weight: 700; }
+    .saved { color: var(--success); font-size: 12px; font-weight: 700; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+
+    .progress {
+      height: 6px;
+      margin: 18px 0 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #eee7df;
+    }
+
+    .progress > span {
+      display: block;
+      width: var(--progress, 25%);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--brand);
+    }
+
+    .step-caption {
+      margin-bottom: 22px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .input, .select, .textarea, .search {
+      width: 100%;
+      min-height: 48px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .textarea { min-height: 86px; }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .choice, .privacy, .upload, .summary, .event-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .choice {
+      padding: 14px;
+      text-align: center;
+    }
+
+    .choice.selected {
+      border: 2px solid var(--brand);
+      background: var(--brand-soft);
+    }
+
+    .map {
+      position: relative;
+      height: 230px;
+      margin: 12px 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background:
+        linear-gradient(35deg, transparent 45%, #d5cec5 46%, #d5cec5 49%, transparent 50%),
+        linear-gradient(-25deg, transparent 42%, #ddd6cd 43%, #ddd6cd 47%, transparent 48%),
+        #ece8df;
+      background-size: 100px 70px, 130px 90px, auto;
+    }
+
+    .pin {
+      position: absolute;
+      top: 44%;
+      left: 52%;
+      width: 28px;
+      height: 28px;
+      border: 7px solid var(--brand);
+      border-radius: 50% 50% 50% 0;
+      background: #fff;
+      transform: rotate(-45deg);
+      box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
+    }
+
+    .venue-card, .notice {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f1eee8;
+      font-size: 13px;
+    }
+
+    .upload {
+      padding: 22px 14px;
+      border-style: dashed;
+      text-align: center;
+    }
+
+    .upload + .upload { margin-top: 12px; }
+
+    .privacy {
+      position: relative;
+      margin-bottom: 10px;
+      padding: 14px 14px 14px 42px;
+    }
+
+    .privacy::before {
+      position: absolute;
+      top: 17px;
+      left: 15px;
+      width: 15px;
+      height: 15px;
+      border: 2px solid #8f8780;
+      border-radius: 50%;
+      content: "";
+    }
+
+    .privacy.selected {
+      border: 2px solid var(--brand);
+      background: var(--brand-soft);
+    }
+
+    .privacy.selected::before {
+      border: 5px solid var(--brand);
+      background: #fff;
+    }
+
+    .privacy strong, .privacy span { display: block; }
+    .privacy span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .summary { margin: 16px 0; padding: 14px; }
+    .summary dl { margin: 0; }
+    .summary div { display: grid; grid-template-columns: 82px 1fr; padding: 7px 0; border-bottom: 1px solid #eee8e1; }
+    .summary div:last-child { border-bottom: 0; }
+    .summary dt { color: var(--muted); font-size: 12px; }
+    .summary dd { margin: 0; font-size: 13px; font-weight: 650; }
+
+    .button {
+      display: inline-flex;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: #fff;
+      font-weight: 750;
+    }
+
+    .button.primary { border-color: var(--brand); color: #fff; background: var(--brand); }
+    .button.full { width: 100%; }
+    .button.danger { border-color: #e4baba; color: var(--danger); background: #fff8f7; }
+
+    .bottom-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .success-mark {
+      display: grid;
+      width: 74px;
+      height: 74px;
+      margin: 60px auto 24px;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--success);
+      font-size: 32px;
+    }
+
+    .center { text-align: center; }
+    .link-box { margin: 22px 0 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; font-size: 12px; }
+
+    .desktop-frame {
+      margin-bottom: 34px;
+      overflow: hidden;
+      border: 1px solid #cfc6bd;
+      border-radius: 22px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      height: 38px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      background: #eee9e2;
+    }
+
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #c5bbb1; }
+
+    .desktop-app {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      min-height: 700px;
+    }
+
+    .sidebar {
+      padding: 26px 20px;
+      border-right: 1px solid var(--line);
+      background: #fbf7f1;
+    }
+
+    .nav {
+      margin-top: 34px;
+      padding: 12px;
+      border-radius: 10px;
+      color: var(--brand);
+      background: var(--brand-soft);
+      font-weight: 750;
+    }
+
+    .desktop-main { padding: 34px; }
+
+    .desktop-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .event-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .event-card { min-height: 210px; overflow: hidden; }
+    .event-art { height: 92px; background: linear-gradient(135deg, var(--brand-soft), #ead5a8); }
+    .event-card-body { padding: 16px; }
+    .status { color: var(--success); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+
+    .editor-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 680px) minmax(300px, 1fr);
+      gap: 36px;
+    }
+
+    .desktop-steps {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 26px;
+    }
+
+    .desktop-step {
+      flex: 1;
+      padding: 10px;
+      border-bottom: 3px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .desktop-step.active { border-color: var(--brand); color: var(--ink); }
+    .preview { position: sticky; top: 24px; padding: 22px; border-radius: 18px; background: #f1ece4; }
+    .preview-card { overflow: hidden; border-radius: 18px; background: #fff; box-shadow: 0 12px 32px rgb(40 31 24 / 10%); }
+    .preview-art { height: 170px; background: linear-gradient(135deg, var(--brand), #e2b45f); }
+    .preview-copy { padding: 20px; }
+
+    @media (max-width: 900px) {
+      .desktop-app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .event-list { grid-template-columns: 1fr 1fr; }
+      .editor-layout { grid-template-columns: 1fr; }
+      .preview { position: static; }
+    }
+
+    @media (max-width: 620px) {
+      .page-header, .section { padding-right: 16px; padding-left: 16px; }
+      .section-heading { display: block; }
+      .mobile-grid { grid-template-columns: 1fr; }
+      .phone { min-height: 0; }
+      .event-list { grid-template-columns: 1fr; }
+      .desktop-main { padding: 22px; }
+      .desktop-heading { align-items: stretch; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <p class="eyebrow">US-002 · UX revision</p>
+    <h1>Responsive Wambe creation wireframes</h1>
+    <p class="lede">Visual design hypothesis for mobile and desktop. The screens use the approved premium-editorial direction while keeping required fields, accessibility, autosave, privacy, and WhatsApp sharing visible.</p>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Mobile · 390 px reference</p>
+          <h2>First-time creation flow</h2>
+        </div>
+        <p class="note">Each artboard represents a responsive state, not a fixed-device implementation. At 320–767 px, controls remain single-column with 44 px minimum targets.</p>
+      </div>
+
+      <div class="mobile-grid">
+        <article class="phone" aria-label="Mobile sign-in wireframe">
+          <div class="phone-label">01 · Authentication</div>
+          <div class="phone-screen">
+            <div class="brand">Wambe</div>
+            <div style="margin-top:100px">
+              <p class="eyebrow">Every celebration deserves a digital home</p>
+              <h2>Create and share in minutes.</h2>
+              <p class="muted">Bring your invitation, venue and dress code together in one beautiful link.</p>
+              <button class="button full" style="margin-top:22px">G&nbsp;&nbsp; Continue with Google</button>
+              <p class="center muted small" style="margin:14px">or</p>
+              <div class="field"><label>Email address</label><div class="input">you@example.com</div></div>
+              <button class="button primary full">Continue with email</button>
+              <p class="center small" style="margin-top:18px">Already have an account? <u>Sign in</u></p>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Mobile basics step wireframe">
+          <div class="phone-label">02 · Step 1 — Basics</div>
+          <div class="phone-screen">
+            <div class="topbar"><span>Exit</span><span class="brand">Wambe</span><span class="saved">Saved</span></div>
+            <div class="progress" style="--progress:25%"><span></span></div>
+            <div class="step-caption">Step 1 of 4 · Basics</div>
+            <h2>Tell us about the celebration.</h2>
+            <div class="field">
+              <label>Event type</label>
+              <div class="choice-grid">
+                <div class="choice selected">Wedding</div><div class="choice">Birthday</div>
+                <div class="choice">Naming</div><div class="choice">Other</div>
+              </div>
+            </div>
+            <div class="field"><label>Event title</label><div class="input">Amina & Tunde's Wedding</div></div>
+            <div class="row">
+              <div class="field" style="flex:1"><label>Date</label><div class="input">24 Oct 2026</div></div>
+              <div class="field" style="flex:1"><label>Time</label><div class="input">2:00 PM</div></div>
+            </div>
+            <div class="bottom-actions"><button class="button">Back</button><button class="button primary">Continue</button></div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Mobile venue step wireframe">
+          <div class="phone-label">03 · Step 2 — Venue</div>
+          <div class="phone-screen">
+            <div class="topbar"><span>Exit</span><span class="brand">Wambe</span><span class="saved">Saving…</span></div>
+            <div class="progress" style="--progress:50%"><span></span></div>
+            <div class="step-caption">Step 2 of 4 · Venue</div>
+            <h2>Where is the celebration?</h2>
+            <div class="field"><label>Search or enter address</label><div class="search">Civic Centre, Victoria Island</div></div>
+            <div class="map"><span class="pin"></span></div>
+            <div class="venue-card"><strong>Pin confirmed</strong><br><span class="muted">Ozumba Mbadiwe Ave, Lagos</span></div>
+            <div class="bottom-actions"><button class="button">Back</button><button class="button primary">Continue</button></div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Mobile invitation and style step wireframe">
+          <div class="phone-label">04 · Step 3 — Invitation & style</div>
+          <div class="phone-screen">
+            <div class="topbar"><span>Exit</span><span class="brand">Wambe</span><span class="saved">Saved</span></div>
+            <div class="progress" style="--progress:75%"><span></span></div>
+            <div class="step-caption">Step 3 of 4 · Optional</div>
+            <div class="event-top"><h2>Make it feel like yours.</h2><u class="small">Skip for now</u></div>
+            <div class="upload"><strong>＋ Add invitation</strong><br><span class="muted small">JPG, PNG, WebP or PDF · 10 MB</span></div>
+            <div class="upload"><strong>＋ Add Aso-Ebi images</strong><br><span class="muted small">Fabric, colour or style inspiration</span></div>
+            <div class="field" style="margin-top:18px"><label>Dress-code or Aso-Ebi notes <span class="muted">(optional)</span></label><div class="textarea">Emerald green and champagne gold.</div></div>
+            <div class="notice"><strong>Invitation.pdf</strong><br><span class="saved">✓ Scanned and ready</span></div>
+            <div class="bottom-actions"><button class="button">Back</button><button class="button primary">Continue</button></div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Mobile privacy step wireframe">
+          <div class="phone-label">05 · Step 4 — Privacy & publish</div>
+          <div class="phone-screen">
+            <div class="topbar"><span>Exit</span><span class="brand">Wambe</span><span class="saved">Saved</span></div>
+            <div class="progress" style="--progress:100%"><span></span></div>
+            <div class="step-caption">Step 4 of 4 · Privacy & publish</div>
+            <h2>Who can see this event?</h2>
+            <div class="privacy"><strong>Public</strong><span>Anyone with the link can view.</span></div>
+            <div class="privacy selected"><strong>Private link</strong><span>Only people you share the link with.</span></div>
+            <div class="privacy"><strong>Invite-only</strong><span>Guest access setup required.</span></div>
+            <div class="privacy"><strong>Hidden location</strong><span>Approval required to reveal venue.</span></div>
+            <div class="summary">
+              <dl>
+                <div><dt>Event</dt><dd>Amina & Tunde's Wedding</dd></div>
+                <div><dt>When</dt><dd>24 Oct · 2:00 PM</dd></div>
+                <div><dt>Venue</dt><dd>Civic Centre, Lagos</dd></div>
+              </dl>
+            </div>
+            <div class="bottom-actions"><button class="button">Back</button><button class="button primary">Publish Wambe</button></div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Mobile publish success wireframe">
+          <div class="phone-label">06 · Publication success</div>
+          <div class="phone-screen center">
+            <div class="topbar"><span></span><span class="brand">Wambe</span><span></span></div>
+            <div class="success-mark">✓</div>
+            <p class="eyebrow">Published</p>
+            <h2>Your celebration has a digital home.</h2>
+            <p class="muted">Share one trusted link with every guest.</p>
+            <div class="link-box">wambe.africa/e/amina-tunde-8x4k&nbsp;&nbsp; <strong>Copy</strong></div>
+            <button class="button primary full">Share on WhatsApp</button>
+            <div class="bottom-actions"><button class="button">View event</button><button class="button">Edit event</button></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Desktop · 1280 px reference</p>
+          <h2>Management and creation</h2>
+        </div>
+        <p class="note">Desktop preserves the mobile task order. Wider space adds persistent navigation and a contextual preview; it does not introduce extra required fields.</p>
+      </div>
+
+      <article class="desktop-frame" aria-label="Desktop My Wambes wireframe">
+        <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <div class="desktop-app">
+          <aside class="sidebar">
+            <div class="brand">Wambe</div>
+            <div class="nav">My Wambes</div>
+            <p class="muted small" style="margin:18px 12px">Profile<br><br>Help & support</p>
+          </aside>
+          <div class="desktop-main">
+            <div class="desktop-heading">
+              <div><p class="eyebrow">Host workspace</p><h2 style="margin:0">My Wambes</h2></div>
+              <button class="button primary">＋ Create a Wambe</button>
+            </div>
+            <h3>Published</h3>
+            <div class="event-list">
+              <div class="event-card"><div class="event-art"></div><div class="event-card-body"><span class="status">Published</span><h3>Amina & Tunde</h3><p class="muted small">24 Oct 2026 · Lagos</p><u class="small">View · Edit · Share</u></div></div>
+              <div class="event-card"><div class="event-art" style="background:linear-gradient(135deg,#dbe4d7,#8ca681)"></div><div class="event-card-body"><span class="status">Published</span><h3>Mum's 60th</h3><p class="muted small">14 Nov 2026 · Abuja</p><u class="small">View · Edit · Share</u></div></div>
+              <div class="event-card"><div class="event-card-body"><span class="eyebrow">Draft</span><h3>Housewarming</h3><p class="muted small">Last saved 8 minutes ago</p><button class="button">Continue editing</button></div></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="desktop-frame" aria-label="Desktop event editor wireframe">
+        <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <div class="desktop-app">
+          <aside class="sidebar">
+            <div class="brand">Wambe</div>
+            <div class="nav">← My Wambes</div>
+            <p class="muted small" style="margin:18px 12px">Draft<br>Amina & Tunde's Wedding</p>
+          </aside>
+          <div class="desktop-main">
+            <div class="save-row"><div><p class="eyebrow">Create your Wambe</p><h2 style="margin-bottom:0">Invitation & style</h2></div><span class="saved">✓ Saved</span></div>
+            <div class="desktop-steps">
+              <div class="desktop-step">1&nbsp; Basics</div>
+              <div class="desktop-step">2&nbsp; Venue</div>
+              <div class="desktop-step active">3&nbsp; Invitation & style</div>
+              <div class="desktop-step">4&nbsp; Privacy</div>
+            </div>
+            <div class="editor-layout">
+              <div>
+                <div class="event-top"><div><p class="eyebrow">Optional</p><h3>Make it feel like yours.</h3></div><u class="small">Skip for now</u></div>
+                <div class="upload"><strong>＋ Add invitation</strong><br><span class="muted small">JPG, PNG, WebP or PDF · up to 10 MB</span></div>
+                <div class="upload"><strong>＋ Add Aso-Ebi images</strong><br><span class="muted small">Fabric, colour or style inspiration</span></div>
+                <div class="field" style="margin-top:20px"><label>Dress-code or Aso-Ebi notes</label><div class="textarea">Emerald green and champagne gold.</div></div>
+                <div class="bottom-actions"><button class="button">Back</button><button class="button primary">Continue</button></div>
+              </div>
+              <aside class="preview">
+                <p class="eyebrow">Guest preview</p>
+                <div class="preview-card">
+                  <div class="preview-art"></div>
+                  <div class="preview-copy"><p class="muted small">24 October 2026 · Lagos</p><h3>Amina & Tunde's Wedding</h3><p class="muted small">Emerald green and champagne gold</p></div>
+                </div>
+                <p class="muted small" style="margin-top:14px">Preview is illustrative. Guest-page behavior is delivered in a later story.</p>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,15 @@
+wambe:
+  storage:
+    type: supabase
+  internal-jobs:
+    local-key: ""
+
+management:
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN

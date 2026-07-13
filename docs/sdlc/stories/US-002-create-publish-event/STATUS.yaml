@@ -1,0 +1,88 @@
+story_id: US-002
+title: Create and publish a Wambe event
+product_owner: Human user
+methodology: Agile
+state: ACTIVE
+current_stage: implementation_frontend
+active_persona: persona-frontend-developer
+implementation:
+  profile: fullstack
+  order: backend-first
+  contracts:
+    - contracts/openapi-v1.yaml
+    - contracts/product-events-v1.schema.json
+handoff:
+  summary: Product Owner frontend revisions are complete: coordinates are hidden behind a human-readable map flow and the public root now delivers a responsive animated premium-editorial landing experience
+  blockers: []
+  next_action: Product Owner reviews the revised landing and venue evidence and decides whether to approve implementation_frontend
+gates:
+  intake: { status: APPROVED, updated: "2026-07-12", artifact: "ARTIFACTS.md#intake" }
+  requirements: { status: APPROVED, updated: "2026-07-12", artifact: "ARTIFACTS.md#requirements" }
+  ux: { status: APPROVED, updated: "2026-07-12", artifact: "ARTIFACTS.md#ux" }
+  architecture: { status: APPROVED, updated: "2026-07-13", artifact: "ARTIFACTS.md#architecture" }
+  implementation_backend: { status: APPROVED, updated: "2026-07-13", artifact: "ARTIFACTS.md#implementation--backend" }
+  implementation_frontend: { status: PENDING_PO, updated: "2026-07-13", artifact: "ARTIFACTS.md#implementation--frontend" }
+  qa: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#qa" }
+  security: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#security" }
+  operations: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#operations" }
+  done: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#final-product-owner-notes" }
+decisions:
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: intake
+    decision: APPROVED
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: requirements
+    decision: AMENDED
+    reason: Replace email magic links with Google OAuth plus email/password authentication
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: requirements
+    decision: APPROVED
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: ux
+    decision: RENAMED
+    reason: Renumber active event story from US-001 to US-002 to resolve an existing story ID collision
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: ux
+    decision: APPROVED
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: ux
+    decision: REOPENED
+    reason: Add visual wireframes and responsive desktop views before architecture
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: ux
+    decision: AMENDED
+    reason: Preserve the structural wireframes and add a more visually polished responsive concept
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: ux
+    decision: AMENDED
+    reason: Require complete diagrams for every screen and material state with responsive desktop parity
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: ux
+    decision: APPROVED
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: architecture
+    decision: AMENDED
+    reason: Use Spring Boot with Spring Data JPA and Flyway on Cloud Run for the backend while retaining Next.js for the frontend
+  - date: "2026-07-12"
+    actor: Product Owner
+    stage: architecture
+    decision: AMENDED
+    reason: Add standalone architecture diagrams and a responsive visual board before architecture approval
+  - date: "2026-07-13"
+    actor: Product Owner
+    stage: architecture
+    decision: APPROVED
+  - date: "2026-07-13"
+    actor: Product Owner
+    stage: implementation_backend
+    decision: APPROVED
