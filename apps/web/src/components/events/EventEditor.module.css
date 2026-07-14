@@ -187,6 +187,10 @@
   background: var(--surface-soft);
 }
 
+.review :global(.eyebrow) {
+  color: var(--coral-dark);
+}
+
 .review h2 {
   font-size: 2rem;
 }

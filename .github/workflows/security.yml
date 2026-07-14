@@ -1,0 +1,72 @@
+name: Security
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan Git history
+        uses: gitleaks/gitleaks-action@v2
+
+  npm:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [apps/web, packages/wambe-api-client]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+      - name: Audit ${{ matrix.package }}
+        working-directory: ${{ matrix.package }}
+        run: npm audit --audit-level=low
+
+  java:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [services/wambe-api, services/media-scanner]
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Require the NVD API key
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "::error::Configure the NVD_API_KEY repository secret before running the Java vulnerability scan."
+            exit 1
+          fi
+      - name: Scan Java dependency graph
+        working-directory: ${{ matrix.service }}
+        run: >
+          ./mvnw -B org.owasp:dependency-check-maven:check
+          -DnvdApiKey="$NVD_API_KEY"
+          -DfailBuildOnCVSS=7
+          -Dformat=SARIF
+      - name: Upload dependency report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-${{ strategy.job-index }}
+          path: ${{ matrix.service }}/target/dependency-check-report.*
+          if-no-files-found: warn

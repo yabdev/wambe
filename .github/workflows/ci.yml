@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/wambe-api-client/package-lock.json
+      - name: Lint OpenAPI
+        run: npx --yes @redocly/cli lint docs/sdlc/stories/US-002-create-publish-event/contracts/openapi-v1.yaml
+      - name: Validate product-event JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('docs/sdlc/stories/US-002-create-publish-event/contracts/product-events-v1.schema.json', 'utf8'))"
+      - name: Build generated client
+        working-directory: packages/wambe-api-client
+        run: npm ci && npm run build
+
+  java:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [services/wambe-api, services/media-scanner]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Verify ${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
+        run: ./mvnw -B clean verify
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            packages/wambe-api-client/package-lock.json
+      - name: Install generated client
+        working-directory: packages/wambe-api-client
+        run: npm ci
+      - name: Install web
+        working-directory: apps/web
+        run: npm ci
+      - name: Static and unit checks
+        working-directory: apps/web
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            packages/wambe-api-client/package-lock.json
+      - name: Install generated client
+        working-directory: packages/wambe-api-client
+        run: npm ci
+      - name: Install web and Chromium
+        working-directory: apps/web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run browser and accessibility tests
+        working-directory: apps/web
+        run: npm run test:e2e
+
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/wambe-api/Dockerfile
+          push: false
+          tags: wambe-api:ci
+          cache-from: type=gha,scope=wambe-api
+          cache-to: type=gha,mode=max,scope=wambe-api
+      - name: Build scanner image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/media-scanner/Dockerfile
+          push: false
+          tags: media-scanner:ci
+          cache-from: type=gha,scope=media-scanner
+          cache-to: type=gha,mode=max,scope=media-scanner

@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /services/wambe-api
+    schedule:
+      interval: weekly
+    groups:
+      java-api:
+        patterns: ["*"]
+
+  - package-ecosystem: maven
+    directory: /services/media-scanner
+    schedule:
+      interval: weekly
+    groups:
+      java-scanner:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule:
+      interval: weekly
+    groups:
+      web:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /packages/wambe-api-client
+    schedule:
+      interval: weekly
+    groups:
+      api-client:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

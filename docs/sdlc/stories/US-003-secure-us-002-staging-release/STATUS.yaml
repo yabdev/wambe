@@ -1,0 +1,66 @@
+story_id: US-003
+title: Secure US-002 staging release
+product_owner: Human user
+methodology: Agile
+state: ACTIVE
+current_stage: implementation_backend
+active_persona: null
+implementation:
+  profile: fullstack
+  order: backend-first
+  contracts:
+    - ../US-002-create-publish-event/contracts/openapi-v1.yaml
+    - ../US-002-create-publish-event/contracts/product-events-v1.schema.json
+    - STAGING_EVIDENCE_SCHEMA.json
+handoff:
+  summary: Product Owner approved architecture and the fullstack/backend-first profile; backend is the first implementation gate but must not start until the uncommitted US-002 completion work and approved US-003 baseline are committed
+  blockers:
+    - "No staging Supabase, Resend, Google Cloud, Vercel, Google Maps, telemetry or NVD resources currently exist"
+    - "US-002 completion changes must be committed before CI and immutable release evidence can be produced"
+    - "Any paid plan required for PITR, quotas or checklist capability needs a separate Product Owner decision"
+    - "The lowest-cost supported private API-to-scanner VPC route must be verified; any billed connector, load balancer or egress control requires Product Owner approval"
+  next_action: Commit the approved baseline, then invoke /persona-backend-developer US-003 stage: implementation_backend
+gates:
+  intake: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#intake" }
+  requirements: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#requirements" }
+  ux: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#ux" }
+  architecture: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#architecture" }
+  implementation_backend: { status: READY, updated: "2026-07-14", artifact: "ARTIFACTS.md#implementation--backend" }
+  implementation_frontend: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#implementation--frontend" }
+  qa: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#qa" }
+  security: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#security" }
+  operations: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#operations" }
+  done: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#final-product-owner-notes" }
+decisions:
+  - date: "2026-07-14"
+    actor: Product Owner
+    stage: intake
+    decision: CREATED
+    reason: P0 release-blocker story covering SEC-001, SEC-002 and the full staging checklist; staging only, inherited stack/contracts, synthetic data and no committed credentials
+  - date: "2026-07-14"
+    actor: Product Owner
+    stage: intake
+    decision: AMENDED
+    reason: No staging services exist; use free or lowest-cost tiers, ask before paid commitments, founder operates staging, and unavailable paid controls remain blockers
+  - date: "2026-07-14"
+    actor: Product Owner
+    stage: intake
+    decision: APPROVED
+  - date: "2026-07-14"
+    actor: Product Owner
+    stage: requirements
+    decision: AMENDED
+    reason: Close SEC-001 through SEC-004; agent-guided staging configuration may proceed after authentication, pausing before paid/destructive actions; all release-critical checks must pass or be explicitly waived; commit US-002 before implementation
+  - date: "2026-07-14"
+    actor: Product Owner
+    stage: requirements
+    decision: APPROVED
+  - date: "2026-07-14"
+    actor: Product Owner
+    stage: ux
+    decision: APPROVED
+  - date: "2026-07-14"
+    actor: Product Owner
+    stage: architecture
+    decision: APPROVED
+    reason: Approved the architecture and its fullstack, backend-first implementation profile and order

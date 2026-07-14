@@ -1374,34 +1374,511 @@ workflows.
 - Roll back by routing Vercel to the prior immutable deployment. The frontend introduces
   no data migration; disabling the host-creation feature or reverting the web revision
   leaves Java API drafts and stable published URLs intact.
+
+### QA-001 frontend remediation — review-step contrast (2026-07-13)
+
+- Added a review-card-specific eyebrow override in
+  `apps/web/src/components/events/EventEditor.module.css`, changing the small coral text
+  to the existing darker coral design token. The correction preserves the approved
+  palette and hierarchy without changing layout, copy, state or API behavior.
+- Retained QA's expanded axe assertions; no rule was disabled or excluded.
+- `npm run test:e2e` — **PASS, 12/12** across Chromium desktop and Pixel 7, including
+  editor required-field and manager accessibility scans.
+- `npm run lint`, `npm run typecheck`, and IDE diagnostics — **PASS**.
+- QA-001 is resolved in frontend implementation evidence. Independent QA must rerun and
+  update its own release recommendation after Product Owner approval.
+
 ## QA
 
 ### Acceptance-criteria traceability
 
+| Acceptance criterion | Result | Independent QA evidence |
+|---|---|---|
+| AC-001 — Authenticate | **BLOCKED — staging** | Local security-chain tests prove protected routes fail closed, but demo browser tests intentionally bypass authentication. Google OAuth, verified email/password, reset email delivery, account linking and real Supabase JWT refresh require configured Supabase/Resend staging. |
+| AC-002 — Save and resume | **PASS — local** | API create/update persistence, autosave reducer tests, and new desktop/mobile browser cases verify a saved partial draft can be exited and resumed with event type, title and Lagos wall time intact. |
+| AC-003 — Required fields | **PASS — local** | Domain validation plus new desktop/mobile browser cases block publication and present all five required-field failures in the focused error summary; axe reports no violations in that state. |
+| AC-004 — Lean publication | **PASS — local** | API integration and desktop/mobile E2E publish a valid event without optional media. |
+| AC-005 — Map pin | **PARTIAL** | Validator and browser tests block an unconfirmed pin and prove explicit demo-pin confirmation. Real geocoding, browser-key restrictions and map failure behavior require Google Maps staging. |
+| AC-006 — Safe media | **PARTIAL** | Storage size/bucket tests, HMAC/replay tests, clean promotion and new malware-rejection callback coverage prove the draft survives rejection. Real signed Supabase upload and an EICAR file through live `clamd` remain staging release checks. |
+| AC-007 — Visibility | **PASS — local** | New parameterized PostgreSQL integration tests publish all four modes, verify exact persistence, allow public/private-link sharing and keep invite-only/hidden-location metadata unavailable with the required share block. |
+| AC-008 — Stable publication | **PASS — local** | New lifecycle integration test proves the slug and canonical URL remain unchanged through published update, unpublish and republish. |
+| AC-009 — Share | **PARTIAL** | Browser test verifies the WhatsApp payload contains the encoded canonical URL; API tests verify safe public/private-link metadata. External WhatsApp/social-crawler unfurl and cache behavior remains unexecuted. |
+| AC-010 — Lifecycle | **PASS — local** | API state test covers update, unpublish, republish, delete, metadata `404` while unpublished and `410` after deletion. Desktop/mobile browser tests cover confirmed unpublish and permanent-delete controls. |
+| AC-011 — Authorization | **PASS — local** | Existing pooled-connection RLS isolation plus new cross-owner get/update/publish/delete tests return the same neutral `404` and preserve the owner's content. Real Supabase JWT issuer/audience and production CORS remain staging checks. |
+| AC-012 — Retention | **PASS — local** | New Testcontainers case ages a draft beyond 30 days, runs the real retention job, removes its database rows and media, and deletes the enumerated local-storage object. Cloud Scheduler OIDC and Supabase object deletion remain operations checks. |
+| AC-013 — KPI | **PASS — local semantics** | Tests verify server-written open/publication timestamps, required creation/publish product events, and preservation of `resumed_draft` and `staff_assisted` ineligible classifications. The strategic median-under-180-second outcome needs production-like host sessions. |
+| AC-014 — Retry safety | **PASS — local** | Create/publish replay tests prove one event/transition; scanner nonce replay is safe; a new negative test proves reuse of an idempotency key with different data returns `409 IDEMPOTENCY_CONFLICT`. |
+
 ### Test matrix and execution evidence
+
+**Environment:** Windows workstation, Java 21, Docker Desktop, PostgreSQL 16
+Testcontainers, Next.js 16.2.10, Playwright Chromium desktop and Pixel 7 emulation.
+Browser/API external dependencies were run in explicit demo/local-adapter mode; no staging
+credentials were available.
+
+| Layer | Command / scope | Result |
+|---|---|---|
+| API unit/integration/contract generation | `services/wambe-api/.\mvnw.cmd clean verify` | **PASS — 25 tests, 0 failed/error/skipped.** Flyway, RLS, security chains, event lifecycle, all visibility modes, stable URL, cross-owner denial, KPI classification, idempotency conflict, retention object purge, storage and scanner callbacks covered. |
+| Media scanner | `services/media-scanner/.\mvnw.cmd clean verify` | **PASS — 1 context test.** Live ClamAV scan path not executed. |
+| Frontend unit | `apps/web/npm test` | **PASS — 3 autosave reducer tests.** |
+| Browser/system/accessibility | `apps/web/npm run test:e2e` | **PASS — 12/12.** Independent post-remediation rerun passes lean publish/share, required-field blocking, autosave resume, lifecycle management, and landing/dashboard/editor/manager axe checks in desktop Chromium and Pixel 7. |
+| Frontend static/release | `npm run typecheck`, `npm run lint`, `npm run build` | **PASS.** Optimized static/dynamic route generation completed. |
+| API contract/client | Redocly OpenAPI lint; `packages/wambe-api-client/npm run build` | **PASS.** OpenAPI v1 is valid and both generated TypeScript outputs compile. |
+| Dependency audit | `apps/web/npm audit --audit-level=moderate` | **PASS — 0 known vulnerabilities.** |
+| IDE diagnostics | Changed QA test files | **PASS — no diagnostics.** |
+
+The risk-based pyramid prioritizes transaction/RLS and lifecycle integration below the
+browser layer, keeps deterministic state-machine checks at unit level, and uses E2E for
+the highest-value host journeys. Coverage percentages were not used as a proxy for the
+unexercised external trust boundaries.
 
 ### Defects and regression risk
 
+**Open product defects:** none in the locally executable implementation.
+
+- **QA-001 — Medium — RESOLVED — review-step eyebrow failed WCAG AA contrast
+  (NFR-002).**
+  - **Reproduce:** run `apps/web/npm run test:e2e`, or create an empty draft, advance
+    to the visibility/review step, attempt publication and run axe in Chromium.
+  - **Expected:** small text has at least a 4.5:1 foreground/background contrast ratio.
+  - **Actual:** `.review > .eyebrow` renders coral `#b84639` on soft surface `#f0e8dd`
+    at **4.35:1** in both desktop and Pixel 7 projects; axe classifies the violation as
+    serious.
+  - **Resolution verification:** frontend applied the darker approved coral token only
+    inside the review card. QA independently reran the unchanged axe assertion in both
+    browser projects; all 12 cases pass and the violation is absent.
+
+**Resolved while building QA automation:** initial test assertions incorrectly treated
+OpenAPI `JsonNullable` values as plain values and used ambiguous browser locators. These
+were test-code defects only; they were corrected without production changes. One API
+clean build failed during the first maximally parallel local run with transient missing
+compiler symbols; immediate serial `verify` and the final serial `clean verify` passed.
+This is recorded as a non-reproduced local/OneDrive build observation, not a product
+failure.
+
+**Release evidence gaps (not reported as passes):**
+
+- **High — AC-001 / NFR-003:** no real Supabase Google OAuth, email verification,
+  password reset, linked-identity, JWT audience/issuer or refresh/CORS execution.
+- **High — AC-006:** no browser-to-Supabase signed upload or EICAR-through-live-ClamAV
+  dispatch/callback run; cold start and concurrent-scan behavior are unknown.
+- **Medium — AC-005:** Google Maps geocoding and origin-restricted browser key are not
+  exercised; browser tests use the explicitly labelled demo pin.
+- **Medium — AC-009:** WhatsApp/social preview payload is locally correct, but external
+  crawler caching/unfurl was not observed.
+- **Medium — reliability/operations:** Cloud Scheduler OIDC, real Supabase retention
+  deletion, deployed telemetry, alerting and production-like network interruption need
+  environment validation.
+
+Regression-sensitive areas are optimistic versions/idempotency, RLS transaction context,
+stable slugs, protected visibility metadata, scan terminal-state replay, retention
+deletion order, Africa/Lagos conversion and draft keys across remounts. The added tests
+now guard each locally testable path.
+
 ### Release recommendation
+
+**GO for QA approval and progression to security; production remains conditional.**
+
+Local functional, contract, responsive and automated accessibility gates pass with no
+open locally reproducible product defect. QA-001 is independently verified as resolved.
+Production promotion must still remain blocked until a configured staging environment
+passes:
+
+1. Google and verified email/password sign-in, reset delivery, safe account linking,
+   Supabase JWT refresh/audience and Spring CORS checks.
+2. Real Supabase signed upload, clean file promotion and EICAR rejection through the
+   deployed ClamAV service.
+3. Restricted Google Maps geocoding/pin confirmation on mobile and desktop.
+4. Cloud Scheduler OIDC retention/scan dispatch and verification that Supabase objects
+   are actually removed.
+5. External share-preview smoke testing and collection of production-like eligible
+   creation sessions for the median-under-180-second KPI.
+
+Security and operations personas should treat these as explicit release conditions,
+not as evidence already supplied by QA.
 
 ## Security
 
 ### Scope and threat scenarios
 
+**Review date:** 2026-07-13
+
+**Authorized scope:** read-only threat modeling, source/configuration review and local
+automated checks for the US-002 Spring Boot API, media scanner, Next.js frontend,
+Flyway/RLS database controls, Docker development topology and approved contracts. No
+staging target or credentials were available, so no penetration test or live
+Supabase/Cloud Run/Vercel/Google Maps assessment was performed.
+
+**Sensitive assets and data classification:**
+
+- Supabase user identities, bearer sessions and the server-only service-role key are
+  restricted authentication data.
+- Drafts, private-link event details, venue locations and uploaded invitation/Aso-Ebi
+  files are confidential host content; public event metadata is intentionally public.
+- Scanner HMAC material, Scheduler identity and database credentials are restricted
+  service credentials.
+- Product-event records are pseudonymous analytics data and must remain purpose-limited.
+- Stable slugs and signed storage URLs are capabilities and must not be logged or exposed
+  beyond their intended recipients.
+
+**Trust boundaries:** browser to Vercel/Supabase; browser to the bearer-protected Cloud
+Run API; API to PostgreSQL through transaction-local RLS; browser/API/scanner across
+quarantine and active storage; API to scanner over HMAC; Scheduler to internal jobs over
+Google OIDC; and public/social crawlers to safe event metadata. The local Docker profile
+is a separate, lower-trust development boundary and is not a production security model.
+
+**Threat actors and reviewed abuse cases:**
+
+1. An anonymous internet client enumerates slugs, abuses public metadata, sends oversized
+   internal-service requests or reaches accidentally exposed development endpoints.
+2. A malicious authenticated host attempts cross-tenant reads/mutations, forged owner
+   identifiers, unsafe upload completion, analytics pollution or lifecycle replay.
+3. An attacker with a leaked/default service secret forges scanner callbacks, submits
+   attacker-selected scanner URLs or invokes destructive internal jobs.
+4. A malicious file attempts type confusion, malware activation, preview-path
+   substitution, callback replay or scan bypass.
+5. A phishing attacker abuses the OAuth callback return target.
+6. A deployment mistake enables demo/local behavior, broad database-job access, weak
+   secrets or unrestricted third-party keys in a public environment.
+
 ### Checks and evidence
+
+| Check | Evidence and result |
+|---|---|
+| Authentication and session boundary | Spring validates host JWT issuer, signature, expiry and `aud`; Supabase SSR uses `getUser`; missing frontend configuration fails closed. A required host-role claim check is absent (SEC-003). Real Supabase tokens and refresh remain a staging condition. |
+| Object/function authorization | Owner-scoped repositories plus transaction-local PostgreSQL RLS were reviewed. Focused security tests independently passed cross-connection RLS and neutral unauthorized responses. The unused `wambe_jobs` role is over-privileged (SEC-006). |
+| Internal service authentication | Scanner callback/dispatch HMAC uses SHA-256, timestamp and constant-time comparison; callbacks also consume a single-use nonce. Scheduler JWT validates issuer, audience and exact subject, while staging disables the local job key. Known fallback secrets and pre-auth buffering remain findings. |
+| Upload and malware controls | Server MIME/size allowlists, exact object-size completion, quarantine, magic-byte detection, ClamAV, expected preview path, terminal callback handling and idempotent promotion were confirmed. Scanner-provided URLs are not destination-allowlisted (SEC-008). Live EICAR/Supabase evidence remains required. |
+| Injection and output handling | Persistence uses JPA/JDBC parameters and fixed SQL; React renders host strings as text; repository search found no `dangerouslySetInnerHTML`, `eval`, direct `innerHTML` assignment or `document.write`. Jackson rejects unknown properties. No dynamic penetration test was performed. |
+| Browser security | Current Next.js proxy protects `/events/**` and backend authorization remains authoritative. The OAuth return target has a backslash open redirect (SEC-004), and explicit CSP/frame/referrer policies are absent (SEC-007). |
+| Abuse resistance | No application or infrastructure rate-limiting configuration was found. This affects public metadata and expensive authenticated media/mutation paths (SEC-005). |
+| Dependency checks | `npm audit --audit-level=low` passed with **0 known vulnerabilities** for `apps/web` and `packages/wambe-api-client`. Next.js `16.2.10` is newer than the patched `16.2.6` release for the May 2026 proxy/RSC advisories. Sonatype reports no direct known vulnerability for Spring Boot `4.1.0`; this does not prove the complete Java graph is clean. |
+| Java vulnerability scan | OWASP Dependency-Check `12.2.2` initialized but the run was stopped before analysis because NVD required a 365,137-record initial update without an API key. Java transitive dependency scanning is therefore **incomplete**, not a pass; CI must run it with an NVD API key/cache. |
+| Secret checks | Only `.env.example` exists; targeted source/configuration searches found placeholders and variable references, not a committed production credential. Gitleaks was unavailable locally and its container image could not be pulled after two TLS failures, so full history secret scanning is **incomplete**, not a clean-history claim. |
+| Focused regression | `mvnw -Dtest=SecurityIntegrationTest,ScannerHmacFilterTest,RlsIsolationIntegrationTest,ScannerCallbackServiceIntegrationTest test` passed **9/9** tests. This covers filter-chain denial, invalid scanner HMAC, nonce/callback state and pooled RLS isolation, but not the new negative scenarios below. |
+
+**Confirmed strengths:** bearer-token API authorization is authoritative even if the
+frontend proxy is bypassed; CSRF is appropriately disabled for stateless bearer APIs;
+CORS uses explicit origins/methods/headers without credentials; tenant tables have RLS;
+error handling avoids owner-existence disclosure; upload storage is split into
+quarantine/active buckets; scanner result replay is terminal-state aware; image/PDF
+type detection uses bytes rather than trusting the browser; API container execution is
+non-root; and staging hides actuator details and disables the local Scheduler key.
 
 ### Findings and remediation
 
+#### SEC-001 — High — OPEN — scanner buffers an unbounded request before authentication
+
+- **Likelihood:** high if the scanner service is internet-reachable; otherwise medium
+  through any reachable service path.
+- **Impact:** high availability impact. Multiple oversized unauthenticated requests can
+  exhaust heap and repeatedly restart/scale Cloud Run instances before HMAC rejection.
+- **Evidence:** `DispatchHmacFilter.CachedRequest` calls
+  `request.getInputStream().readAllBytes()` before validating timestamp or signature.
+  No request-body or ingress limit is configured. The API callback wrapper has the same
+  pattern, although its expected payload is much smaller.
+- **Affected component:** `services/media-scanner/.../DispatchHmacFilter.java` and
+  `services/wambe-api/.../CachedBodyRequest.java`.
+- **Remediation:** make scanner ingress private where possible; reject absent/invalid
+  `Content-Length`, enforce a small JSON envelope limit with a bounded stream before
+  buffering, configure Cloud Run/proxy request limits and add per-source rate limiting.
+- **Retest status:** not retested; no remediation exists. Add oversized unsigned and
+  signed request tests proving early `413` without proportional memory allocation.
+
+#### SEC-002 — High — OPEN — deployed services fail open to a known scanner HMAC default
+
+- **Likelihood:** medium; it requires a deployed environment to omit
+  `SCANNER_HMAC_SECRET`, but the staging profile does not override or validate it.
+- **Impact:** high. The public value can authenticate scanner dispatch/callback traffic,
+  enabling forged media results and attacker-selected scanner network requests. The
+  default internal-job key creates the same risk outside the staging profile.
+- **Evidence:** API and scanner `application.yml` default to
+  `local-scanner-secret-change-me`; base API configuration also defaults the local job
+  key. Compose necessarily repeats the development HMAC, while only
+  `application-staging.yml` clears the job key.
+- **Affected component:** both Spring services' configuration and deployment bootstrap.
+- **Remediation:** keep defaults only in an explicit local profile; require high-entropy
+  Secret Manager values and fail startup in staging/production when values are blank,
+  known defaults or too short. Disable the local job-key path outside local/test and
+  rotate both credentials before first deployment.
+- **Retest status:** not retested. Add profile startup tests for missing/default secrets
+  and an environment smoke test showing only rotated secrets authenticate.
+
+#### SEC-003 — Medium — OPEN — host JWTs do not enforce the approved user-role claim
+
+- **Likelihood:** medium; exploitation requires another Supabase-issued token with
+  `aud=authenticated` and a UUID subject.
+- **Impact:** high if such a non-user token is obtained, because it would be accepted by
+  host endpoints contrary to the approved trust boundary. Existing service-role
+  compromise is already independently severe.
+- **Evidence:** `SecurityConfig.hostJwtDecoder` validates issuer and audience only;
+  architecture explicitly requires rejection of `anon` and `service_role` claims.
+  `CurrentOwner` then trusts the UUID `sub`.
+- **Affected component:** Wambe API JWT decoder.
+- **Remediation:** add an `OAuth2TokenValidator<Jwt>` requiring
+  `role=authenticated` and explicitly reject absent, `anon` and `service_role` roles.
+- **Retest status:** not retested. Add signed JWT fixtures for accepted authenticated
+  and rejected anon/service-role/missing-role cases.
+
+#### SEC-004 — Medium — OPEN — OAuth callback permits a backslash open redirect
+
+- **Likelihood:** medium; an attacker can send a crafted sign-in link with a percent-
+  encoded backslash return target.
+- **Impact:** medium phishing/session-flow confusion after authentication.
+- **Evidence:** callback validation accepts any value beginning with one `/` and rejects
+  only `//`. Runtime verification showed `/\\evil.example` resolves through WHATWG URL
+  parsing to `https://evil.example/`.
+- **Affected component:** `apps/web/src/app/auth/callback/route.ts`.
+- **Remediation:** parse against the trusted site origin and require the result's
+  `origin` to match exactly; alternatively allowlist known internal path prefixes and
+  reject backslashes/control characters.
+- **Retest status:** not retested. Add route tests for encoded backslashes, protocol-
+  relative paths, encoded separators and valid internal destinations.
+
+#### SEC-005 — Medium — OPEN — no explicit API abuse or cost controls
+
+- **Likelihood:** high under normal internet exposure.
+- **Impact:** medium availability/cost and analytics-integrity impact through slug
+  enumeration, media/scan queue pressure, mutation retries and idempotency/product-event
+  table growth.
+- **Evidence:** no application limiter, Cloud Armor/API Gateway policy or infrastructure
+  configuration exists in scope.
+- **Affected component:** public metadata, host mutations, media intents/completion and
+  product-event ingestion.
+- **Remediation:** apply edge quotas plus per-IP limits for public reads and per-owner
+  token buckets for expensive authenticated operations; bound concurrent scans, daily
+  media volume and milestone frequency; return `429` with telemetry.
+- **Retest status:** not retested. Add burst/sustained-limit tests and staging load
+  evidence.
+
+#### SEC-006 — Medium — OPEN — dormant database job role bypasses all tenant isolation
+
+- **Likelihood:** low today because `wambe_jobs` is `NOLOGIN` and the application uses
+  `wambe_api`; likelihood rises if membership/credentials are later assigned.
+- **Impact:** high confidentiality and integrity impact across every tenant table.
+- **Evidence:** the baseline grants `wambe_jobs` full table CRUD and creates
+  `USING (true) WITH CHECK (true)` RLS policies, while job functions are actually granted
+  to `wambe_api`.
+- **Affected component:** Flyway `V1__baseline.sql`.
+- **Remediation:** remove direct table grants/global policies and expose only narrowly
+  scoped `SECURITY DEFINER` functions to a job role; add migration tests for effective
+  privileges.
+- **Retest status:** not retested.
+
+#### SEC-007 — Medium — OPEN — browser security headers are not explicitly defined
+
+- **Likelihood:** low for current React text rendering; increases as third-party scripts
+  and richer public templates are added.
+- **Impact:** medium defense-in-depth loss for XSS, framing and referrer leakage.
+- **Evidence:** `next.config.ts` has no `headers()` policy and repository search found no
+  CSP, `frame-ancestors`, `Referrer-Policy` or `Permissions-Policy`.
+- **Affected component:** Next.js public, auth and host pages.
+- **Remediation:** add and stage-test a nonce-compatible CSP, `frame-ancestors 'none'`
+  (or an approved framing policy), strict referrer policy and least-privilege permissions
+  policy; rely on Vercel HSTS for the production domain and verify it.
+- **Retest status:** not retested. Add header assertions and CSP violation monitoring.
+
+#### SEC-008 — Medium — OPEN — scanner trusts signed-request network destinations
+
+- **Likelihood:** low with a strong private HMAC; medium when combined with SEC-002 or a
+  compromised API.
+- **Impact:** medium SSRF/internal-service access and arbitrary callback/upload attempts
+  from the scanner network identity.
+- **Evidence:** `ScanService` directly uses request-provided `readUrl`,
+  `previewWriteUrl` and `callbackUrl` without scheme/host allowlists. Content download is
+  bounded to 10 MB, but destination choice is not.
+- **Affected component:** media scanner outbound HTTP.
+- **Remediation:** allowlist HTTPS Supabase storage hosts and the exact API callback
+  origin, reject userinfo/nonstandard ports/redirects and apply restrictive Cloud Run
+  egress/firewall policy.
+- **Retest status:** not retested. Add private-IP, alternate-port, redirect and
+  lookalike-host rejection tests.
+
+#### SEC-009 — Medium — OPEN — local object I/O is unauthenticated on all host interfaces
+
+- **Likelihood:** medium for developers on shared/untrusted networks; production
+  likelihood is low because the controller requires `local`/`test`.
+- **Impact:** medium exposure or replacement of local quarantine files and bypass of the
+  intended local upload workflow.
+- **Evidence:** `/dev-storage/**` is permit-all; local signed URLs have no signature; and
+  Compose publishes API port `8080` on all interfaces while activating the local profile.
+  Path traversal is correctly blocked by normalized-root checks.
+- **Affected component:** local storage controller, local adapter and Compose.
+- **Remediation:** bind development ports to `127.0.0.1`, use an ephemeral dev token or
+  actual short-lived signatures and retain the profile/property production guard.
+- **Retest status:** not retested.
+
+#### SEC-010 — Low — OPEN — deleted public slugs disclose prior existence
+
+- **Likelihood:** low because slugs have high entropy unless previously shared.
+- **Impact:** low privacy disclosure that a specific event URL once existed and was
+  deleted.
+- **Evidence:** `safe_event_metadata` returns deleted rows and
+  `PublicMetadataService` maps those to `410`, while unknown values return `404`.
+- **Affected component:** public metadata SQL/service.
+- **Remediation:** return a uniform `404` for deleted and unknown slugs unless `410` is a
+  deliberate, documented product/privacy choice.
+- **Retest status:** not retested.
+
+**Reviewed design decisions, not defects:** possession of a high-entropy private-link
+slug intentionally grants public metadata access in this story; invite-only and hidden-
+location metadata remain blocked pending guest enforcement. Explicit demo mode is also
+intentional for local UI work, but production must enforce
+`NEXT_PUBLIC_DEMO_MODE=false`.
+
 ### Residual risk
+
+**Critical findings:** 0.
+
+**High findings:** 2 open (SEC-001 and SEC-002).
+
+**Medium findings:** 7 open.
+
+**Low findings:** 1 open.
+
+**Security gate recommendation: CONDITIONAL NO-GO for production.** The locally tested
+authorization, RLS, idempotency and malware-state controls are a strong baseline, but
+the two High findings must be remediated and retested before production exposure.
+SEC-003 and SEC-004 should be fixed in the same remediation pass because they directly
+affect authentication boundaries.
+
+Production promotion also remains blocked on the QA staging conditions: real Supabase
+Google/email authentication and JWT refresh; live signed storage and EICAR-through-
+ClamAV; exact production CORS and Google Maps key restrictions; Scheduler OIDC with the
+local key disabled; verified retention deletion; external share previews; and deployed
+telemetry/alerting. CI must add repeatable Java transitive dependency and Git-history
+secret scans; neither incomplete local scan is represented as a pass.
 
 ## Operations
 
 ### CI/CD and environment readiness
 
+**Review date:** 2026-07-13
+
+**Release posture: NOT READY for production.** Credential-free delivery scaffolding
+is in place. Production remains blocked by open High security findings (SEC-001,
+SEC-002), incomplete Java/Gitleaks security workflow evidence, and the QA staging
+conditions that still require real provider credentials.
+
+**Added delivery controls**
+
+| Path | Purpose |
+|---|---|
+| `.github/workflows/ci.yml` | Required PR/`main` gate: OpenAPI lint, both Java `verify` suites, generated client, web lint/typecheck/unit/build, Playwright, and both Docker images |
+| `.github/workflows/security.yml` | Scheduled/manual Gitleaks, npm audit, and OWASP Dependency-Check (requires `NVD_API_KEY`) |
+| `.github/workflows/release-images.yml` | Manual, environment-protected Artifact Registry publish with SBOM/provenance |
+| `.github/dependabot.yml` | Weekly Maven, npm and Actions updates |
+| `scripts/verify.ps1`, `scripts/verify.sh` | Local CI parity |
+| `scripts/check-deploy-env.ps1` | Staging/production static env validation (rotated secret length, empty job key, no demo mode, no localhost CORS) |
+| `docs/operations/README.md` | Operations handbook: environments, gates, migration/rollback, SLOs, DR, runbooks |
+| `docs/operations/staging-release-checklist.md` | Executable staging evidence checklist |
+
+**Local verification evidence**
+
+| Check | Result |
+|---|---|
+| OpenAPI Redocly lint | **PASS** |
+| `services/wambe-api` `mvnw clean verify` | **PASS — 25 tests** |
+| `services/media-scanner` `mvnw clean verify` | **PASS — 1 test** |
+| `packages/wambe-api-client` build | **PASS** |
+| `scripts/check-deploy-env.ps1 -Environment staging` with synthetic safe values | **PASS** |
+| YAML lint of workflows and Cloud Run templates | **PASS** |
+| Full `scripts/verify.ps1` including web `npm ci` | **BLOCKED locally** — Windows `EPERM` unlinking `@next/swc-win32-x64-msvc` while a long-running `npm run dev` held the binary. CI must re-run web/browser jobs on a clean runner; prior QA already passed web lint/typecheck/build/e2e on this codebase. |
+| Java Dependency-Check / Gitleaks | **Not yet green as evidence** — workflow authored; needs `NVD_API_KEY` and a successful Actions run. |
+
+**Environment readiness**
+
+- Separate local / staging / production projects are mandated in the handbook.
+- Deployed profiles must use Supabase storage, empty `INTERNAL_JOB_KEY`, rotated
+  `SCANNER_HMAC_SECRET` (≥32 chars, not the known local default), exact HTTPS CORS,
+  and `NEXT_PUBLIC_DEMO_MODE=false`.
+- Architecture rollout flags `host_creation_enabled` /
+  `protected_visibility_share_enabled` are **not implemented** in application code;
+  pilot access must be controlled by deployment/access policy until they exist.
+- Operations compensating controls for SEC-001/SEC-002 (internal scanner ingress,
+  concurrency 1, Secret Manager, pre-deploy secret checks) reduce exposure but **do
+  not close** those findings.
+
 ### Deployment and rollback
+
+**Templates (placeholders only; no cloud IDs or secrets)**
+
+| Path | Purpose |
+|---|---|
+| `infra/gcp/cloud-run/wambe-api.service.example.yaml` | Public API service: staging profile, health probes, Secret Manager refs, empty job key |
+| `infra/gcp/cloud-run/media-scanner.service.example.yaml` | Internal-ingress scanner, concurrency 1, max scale 3 |
+| `infra/gcp/cloud-run/README.md` | Substitution table, IAM/network policy, pre-deploy gates |
+| `infra/gcp/scheduler/README.md` | Scan-dispatch (every minute) and retention (daily) OIDC job recipes |
+
+**Rollout sequence (authorized only after PO approval and staging evidence)**
+
+1. Staging Supabase Auth/DB/storage + Resend SMTP.
+2. Flyway with migration principal; record `flyway info`.
+3. Scanner from immutable digest; clean + EICAR paths.
+4. API with zero host traffic; JWT/CORS/RLS/Scheduler/metadata/storage smoke.
+5. Web preview with demo mode off; desktop/mobile smoke.
+6. Telemetry fail-open proof; rollback drill; complete staging checklist.
+7. Promote the **same** digests/config shape to production for pilot users only.
+
+**Rollback**
+
+1. Stop exposure (disable Vercel deployment / access if needed).
+2. Shift API and scanner traffic independently to prior healthy Cloud Run revisions.
+3. Instant-rollback Vercel to the previous deployment.
+4. Flyway is forward-only; never reverse migration history. Prefer expand/migrate/contract
+   and prior-revision API compatibility.
+5. Rerun scan dispatch after scanner recovery for media left in `scanning`.
+6. Verify health, auth, lean publish and one clean upload before resolving.
+
+No production or staging cloud deploy was performed in this stage.
 
 ### Monitoring, alerts, and runbooks
 
+**Pilot SLOs** (from approved architecture; not contractual): API availability 99.5%/month;
+publish and auth-callback success ≥95%/hour; scan queue p95 age <10 minutes; daily
+retention 100% success; observe API p95 latency with a 2s/10min warning.
+
+**Alert rules authored:** `infra/observability/prometheus/wambe-alerts.yml` covers API
+availability, publish 5xx rate >5% for 10 minutes, and p95 latency >2s. Scan-age,
+retention-outcome, auth-callback and telemetry-drop alerts remain **blocked** until
+those metrics are exported; do not treat them as active.
+
+**Runbooks** live in `docs/operations/README.md` for API outage/latency, publish errors,
+scanner backlog/memory (SEC-001), auth callback failure and retention failure. Logs must
+exclude tokens, signed URLs, titles, addresses, filenames and bodies.
+
+Self-hosted OTel/Grafana/Umami VPS stack is still **not deployed**; handbook records
+fail-open and backup expectations when that VPS exists.
+
 ### Support ownership and post-release checks
 
+- **Release authority:** Product Owner.
+- **Primary on-call (founder MVP):** founder / Product Owner until a named backup
+  operator is recorded outside the public repo.
+- **Support triage:** environment, time, route, safe error code, request ID, browser,
+  media-used flag — never passwords, tokens, signed URLs or uploads.
+- **Post-release:** execute `docs/operations/staging-release-checklist.md` (and the
+  production subset), watch critical alerts for the first pilot window, and stop
+  expansion on isolation/malware/publish-regression failures.
+- **Known residual risks carried into release decision:** SEC-001, SEC-002, Medium
+  SEC-003–SEC-009, Low SEC-010, incomplete NVD/Gitleaks Actions evidence, and all QA
+  staging conditions.
+
+**Operations gate recommendation: CONDITIONAL — approve the delivery/ops scaffolding
+for progression, but keep production blocked** until High security remediations are
+retested and the staging checklist is evidenced with real credentials.
+
 ## Final Product Owner Notes
+
+On 2026-07-14, the Product Owner entered
+`/sdlc-orchestrator APPROVE US-002 stage: done`. All required SDLC gates are approved,
+the implementation profile is recorded as full-stack/backend-first, acceptance criteria
+are mapped to QA evidence, and delivery, rollback, monitoring, support and known
+limitations are documented. Story US-002 is therefore **DONE**.
+
+This completion decision closes the story workflow; it is not authorization to deploy
+to production. SEC-001 and SEC-002 remain open High risks accepted for SDLC progression,
+and production remains blocked until they are remediated and retested. The configured
+staging release checklist must also pass with real Supabase/Resend, signed storage/live
+ClamAV, restricted Google Maps, Scheduler OIDC, external sharing, observability, Java
+dependency scanning and Git-history secret scanning evidence.

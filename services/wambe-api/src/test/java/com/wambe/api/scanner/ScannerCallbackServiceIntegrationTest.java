@@ -104,6 +104,75 @@ class ScannerCallbackServiceIntegrationTest extends PostgresIntegrationTest {
         assertThat(Files.exists(quarantine)).isFalse();
     }
 
+    @Test
+    void rejectsUnsafeMediaWithoutDiscardingItsDraft() throws Exception {
+        UUID ownerId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        UUID mediaId = UUID.randomUUID();
+        String objectPath = ownerId + "/" + eventId + "/" + mediaId + "/original";
+        transactions.executeWithoutResult(status -> {
+            setOwner(ownerId);
+            jdbcTemplate.update("""
+                    insert into events (id, owner_id, status, timezone, last_saved_at)
+                    values (?, ?, 'draft', 'Africa/Lagos', now())
+                    """,
+                    eventId,
+                    ownerId);
+            jdbcTemplate.update("""
+                    insert into event_media (
+                        id, event_id, owner_id, role, filename, claimed_mime_type,
+                        size_bytes, quarantine_path, storage_status
+                    ) values (?, ?, ?, 'invitation', 'unsafe.png', 'image/png',
+                              5, ?, 'scanning')
+                    """,
+                    mediaId,
+                    eventId,
+                    ownerId,
+                    objectPath);
+            jdbcTemplate.update("""
+                    insert into scan_jobs (media_id, owner_id, status)
+                    values (?, ?, 'leased')
+                    """,
+                    mediaId,
+                    ownerId);
+        });
+        var quarantine = storage.quarantinePath(objectPath);
+        Files.createDirectories(quarantine.getParent());
+        Files.write(quarantine, new byte[] {0x45, 0x49, 0x43, 0x41, 0x52});
+
+        var request = new ScannerCallbackRequest(
+                        mediaId,
+                        ScannerCallbackRequest.ResultEnum.REJECTED,
+                        ScannerCallbackRequest.DetectedMimeTypeEnum.IMAGE_PNG,
+                        "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")
+                .rejectionCode(ScannerCallbackRequest.RejectionCodeEnum.MALWARE_DETECTED);
+
+        callbacks.accept(
+                OffsetDateTime.now(ZoneOffset.UTC),
+                UUID.randomUUID(),
+                "rejected-digest",
+                request);
+
+        var statuses = transactions.execute(transaction -> {
+            setOwner(ownerId);
+            return jdbcTemplate.queryForMap("""
+                    select event.status as event_status,
+                           media.storage_status as media_status,
+                           media.rejection_code
+                    from events event
+                    join event_media media on media.event_id = event.id
+                    where event.id = ? and media.id = ?
+                    """,
+                    eventId,
+                    mediaId);
+        });
+        assertThat(statuses)
+                .containsEntry("event_status", "draft")
+                .containsEntry("media_status", "rejected")
+                .containsEntry("rejection_code", "malware_detected");
+        assertThat(Files.exists(quarantine)).isFalse();
+    }
+
     private void setOwner(UUID ownerId) {
         jdbcTemplate.queryForObject(
                 "select set_config('app.current_user_id', ?, true)",
