@@ -3,6 +3,11 @@
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getBrowserSupabase, isDemoMode } from "@/lib/auth/client";
+import {
+  buildAuthCallbackUrl,
+  safeRedirectPath,
+} from "@/lib/auth/safe-redirect-path";
+import { getClientSiteOrigin } from "@/lib/auth/site-origin";
 import styles from "./AuthPanel.module.css";
 
 type Mode = "sign-in" | "register" | "reset";
@@ -15,11 +20,14 @@ export function AuthPanel() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const next = search.get("next") ?? "/events";
 
   async function continueWithGoogle() {
     let supabase;
+    let siteOrigin: string;
+    let next: string;
     try {
+      siteOrigin = getClientSiteOrigin();
+      next = safeRedirectPath(search.get("next"), siteOrigin);
       supabase = getBrowserSupabase();
     } catch {
       setStatus("Sign-in is not configured for this environment.");
@@ -30,7 +38,7 @@ export function AuthPanel() {
       return;
     }
     setBusy(true);
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    const redirectTo = buildAuthCallbackUrl(next, siteOrigin);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
@@ -44,7 +52,11 @@ export function AuthPanel() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     let supabase;
+    let siteOrigin: string;
+    let next: string;
     try {
+      siteOrigin = getClientSiteOrigin();
+      next = safeRedirectPath(search.get("next"), siteOrigin);
       supabase = getBrowserSupabase();
     } catch {
       setStatus("Sign-in is not configured for this environment.");
@@ -58,7 +70,7 @@ export function AuthPanel() {
     setStatus(undefined);
     if (mode === "reset") {
       await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/auth`,
+        redirectTo: buildAuthCallbackUrl("/auth", siteOrigin),
       });
       setStatus("If that email is registered, reset instructions are on the way.");
       setBusy(false);
@@ -70,7 +82,7 @@ export function AuthPanel() {
             email,
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+              emailRedirectTo: buildAuthCallbackUrl(next, siteOrigin),
             },
           })
         : await supabase.auth.signInWithPassword({ email, password });

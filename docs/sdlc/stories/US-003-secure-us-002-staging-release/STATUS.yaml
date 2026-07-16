@@ -2,8 +2,8 @@ story_id: US-003
 title: Secure US-002 staging release
 product_owner: Human user
 methodology: Agile
-state: ACTIVE
-current_stage: implementation_backend
+state: DONE
+current_stage: done
 active_persona: null
 implementation:
   profile: fullstack
@@ -13,24 +13,32 @@ implementation:
     - ../US-002-create-publish-event/contracts/product-events-v1.schema.json
     - STAGING_EVIDENCE_SCHEMA.json
 handoff:
-  summary: Product Owner approved architecture and the fullstack/backend-first profile; backend is the first implementation gate but must not start until the uncommitted US-002 completion work and approved US-003 baseline are committed
+  summary: Product Owner completed the Definition of Done and closed US-003; staging and production remain blocked by the recorded release conditions
   blockers:
-    - "No staging Supabase, Resend, Google Cloud, Vercel, Google Maps, telemetry or NVD resources currently exist"
-    - "US-002 completion changes must be committed before CI and immutable release evidence can be produced"
+    - "QA-001: US-003 has no immutable release commit; authenticated account yabdevTM cannot access origin yabdev/wambe and yabdevTM/wambe does not exist, so CI, Security and release evidence are unavailable"
+    - "No staging Supabase, Resend, Google Cloud, Vercel, Google Maps or telemetry resources exist; gcloud, Vercel and Supabase CLIs and matching provider MCP tools are unavailable"
     - "Any paid plan required for PITR, quotas or checklist capability needs a separate Product Owner decision"
     - "The lowest-cost supported private API-to-scanner VPC route must be verified; any billed connector, load balancer or egress control requires Product Owner approval"
-  next_action: Commit the approved baseline, then invoke /persona-backend-developer US-003 stage: implementation_backend
+    - "SEC-011: API SBOM contains Medium CVE-2026-54515 in jackson-databind 2.21.4; upgrade and API/SBOM/OSV/NVD regression remain required"
+    - "SEC-012: Cloud Run scanner internal ingress, no-public-invoker policy, exact API service-account invoker and exact-audience ID token remain undeployed and unverified"
+    - "SEC-013: API runtime does not independently forbid local storage or a mixed dev/deployed profile"
+    - "SEC-014: A synthetic deployed-secret test fixture triggers Gitleaks and will block the post-commit Security workflow until narrowly remediated"
+    - "NVD-backed Java dependency analysis is unavailable because no NVD API key is configured"
+    - "All 42 staging checklist controls remain NOT_RUN; only a schema-valid all-NOT_RUN template exists, not an actual release evidence record"
+    - "Rollback, restore, alert delivery, log-privacy review and post-release checks remain unexecuted"
+    - "The API template plus default pool permits up to 100 application database connections at max scale; actual staging quota and safe pool/scale settings are unknown"
+  next_action: Resolve the recorded blockers in an explicitly authorized follow-up or reopened stage before any staging or production release
 gates:
   intake: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#intake" }
   requirements: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#requirements" }
   ux: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#ux" }
   architecture: { status: APPROVED, updated: "2026-07-14", artifact: "ARTIFACTS.md#architecture" }
-  implementation_backend: { status: READY, updated: "2026-07-14", artifact: "ARTIFACTS.md#implementation--backend" }
-  implementation_frontend: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#implementation--frontend" }
-  qa: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#qa" }
-  security: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#security" }
-  operations: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#operations" }
-  done: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#final-product-owner-notes" }
+  implementation_backend: { status: APPROVED, updated: "2026-07-15", artifact: "ARTIFACTS.md#implementation--backend" }
+  implementation_frontend: { status: APPROVED, updated: "2026-07-15", artifact: "ARTIFACTS.md#implementation--frontend" }
+  qa: { status: APPROVED, updated: "2026-07-15", artifact: "ARTIFACTS.md#qa" }
+  security: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#security" }
+  operations: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#operations" }
+  done: { status: DONE, updated: "2026-07-16", artifact: "ARTIFACTS.md#final-product-owner-notes" }
 decisions:
   - date: "2026-07-14"
     actor: Product Owner
@@ -64,3 +72,27 @@ decisions:
     stage: architecture
     decision: APPROVED
     reason: Approved the architecture and its fullstack, backend-first implementation profile and order
+  - date: "2026-07-15"
+    actor: Product Owner
+    stage: implementation_backend
+    decision: APPROVED
+  - date: "2026-07-15"
+    actor: Product Owner
+    stage: implementation_frontend
+    decision: APPROVED
+  - date: "2026-07-15"
+    actor: Product Owner
+    stage: qa
+    decision: APPROVED
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: security
+    decision: APPROVED
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: operations
+    decision: APPROVED
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: done
+    decision: APPROVED

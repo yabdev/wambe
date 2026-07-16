@@ -6,6 +6,7 @@ import com.wambe.api.integration.scanner.ScannerDispatchPort;
 import com.wambe.api.integration.storage.ObjectStoragePort;
 import com.wambe.api.media.persistence.MediaEntity;
 import com.wambe.api.media.persistence.MediaRepository;
+import com.wambe.api.observability.WambeMetrics;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -23,6 +24,7 @@ public class InternalJobService {
     private final MediaRepository media;
     private final ScannerDispatchPort scanner;
     private final ObjectStoragePort storage;
+    private final WambeMetrics metrics;
 
     public InternalJobService(
             JdbcTemplate jdbcTemplate,
@@ -30,13 +32,15 @@ public class InternalJobService {
             RlsContext rls,
             MediaRepository media,
             ScannerDispatchPort scanner,
-            ObjectStoragePort storage) {
+            ObjectStoragePort storage,
+            WambeMetrics metrics) {
         this.jdbcTemplate = jdbcTemplate;
         this.transactions = transactions;
         this.rls = rls;
         this.media = media;
         this.scanner = scanner;
         this.storage = storage;
+        this.metrics = metrics;
     }
 
     public InternalJobResult dispatchDueScans() {
@@ -50,11 +54,22 @@ public class InternalJobService {
         if (jobs != null) {
             for (LeasedJob job : jobs) {
                 try {
-                    MediaEntity item = transactions.execute(status -> {
+                    DispatchPayload payload = transactions.execute(status -> {
                         rls.apply(job.ownerId());
-                        return media.findByIdAndOwnerId(job.mediaId(), job.ownerId()).orElseThrow();
+                        MediaEntity item =
+                                media.findByIdAndOwnerId(job.mediaId(), job.ownerId()).orElseThrow();
+                        double ageSeconds = jdbcTemplate.queryForObject("""
+                                        select extract(epoch from (now() - created_at))::double precision
+                                          from scan_jobs
+                                         where id = ? and owner_id = ?
+                                        """,
+                                Double.class,
+                                job.jobId(),
+                                job.ownerId());
+                        return new DispatchPayload(item, ageSeconds);
                     });
-                    scanner.dispatch(job.jobId(), item);
+                    metrics.scanJobAge(payload.ageSeconds());
+                    scanner.dispatch(job.jobId(), payload.media());
                     affected++;
                 } catch (RuntimeException exception) {
                     markFailure(job, exception.getClass().getSimpleName());
@@ -69,6 +84,17 @@ public class InternalJobService {
     }
 
     public InternalJobResult runRetention() {
+        try {
+            InternalJobResult result = runRetentionInternal();
+            metrics.retentionOutcome("success");
+            return result;
+        } catch (RuntimeException exception) {
+            metrics.retentionOutcome("failure");
+            throw exception;
+        }
+    }
+
+    private InternalJobResult runRetentionInternal() {
         OffsetDateTime runAt = now();
         List<StoragePaths> paths = transactions.execute(status -> jdbcTemplate.query(
                 "select * from retention_storage_paths(?)",
@@ -133,6 +159,9 @@ public class InternalJobService {
     }
 
     private record LeasedJob(UUID jobId, UUID mediaId, UUID ownerId) {
+    }
+
+    private record DispatchPayload(MediaEntity media, double ageSeconds) {
     }
 
     private record StoragePaths(String quarantinePath, String activePath, String previewPath) {

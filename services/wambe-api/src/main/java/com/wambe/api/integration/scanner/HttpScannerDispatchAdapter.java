@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wambe.api.integration.storage.ObjectStoragePort;
 import com.wambe.api.media.persistence.MediaEntity;
 import java.nio.charset.StandardCharsets;
+import java.net.http.HttpClient;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -15,6 +16,8 @@ import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -26,17 +29,29 @@ public class HttpScannerDispatchAdapter implements ScannerDispatchPort {
     private final ObjectMapper objectMapper;
     private final byte[] secret;
     private final String apiBaseUrl;
+    private final ScannerIdentityTokenProvider identityTokenProvider;
 
     public HttpScannerDispatchAdapter(
             RestClient.Builder builder,
             ObjectStoragePort storage,
             ObjectMapper objectMapper,
+            ScannerIdentityTokenProvider identityTokenProvider,
             @Value("${wambe.scanner.url}") String scannerUrl,
             @Value("${wambe.scanner.hmac-secret}") String secret,
             @Value("${wambe.api-base-url}") String apiBaseUrl) {
-        this.client = builder.baseUrl(scannerUrl).build();
+        var httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build();
+        var requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofSeconds(10));
+        this.client = builder
+                .requestFactory(requestFactory)
+                .baseUrl(scannerUrl)
+                .build();
         this.storage = storage;
         this.objectMapper = objectMapper;
+        this.identityTokenProvider = identityTokenProvider;
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
         this.apiBaseUrl = apiBaseUrl.replaceAll("/+$", "");
     }
@@ -59,12 +74,16 @@ public class HttpScannerDispatchAdapter implements ScannerDispatchPort {
                 "callbackUrl", apiBaseUrl + "/api/v1/internal/scanner/callback");
         byte[] json = json(body);
         String digest = sha256(json);
-        client.post()
+        RestClient.RequestBodySpec request = client.post()
                 .uri("/scan")
                 .header("X-Wambe-Timestamp", timestamp)
                 .header("X-Wambe-Nonce", nonce.toString())
                 .header("X-Wambe-Signature", hmac(timestamp + "\n" + nonce + "\n" + digest))
-                .header("Content-Type", "application/json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .contentLength(json.length);
+        identityTokenProvider.token()
+                .ifPresent(token -> request.header("X-Serverless-Authorization", "Bearer " + token));
+        request
                 .body(json)
                 .retrieve()
                 .toBodilessEntity();

@@ -47,7 +47,7 @@ public class ScannerHmacFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().equals("/api/v1/internal/scanner/callback");
+        return !RequestEnvelopeFilter.isCallbackRequest(request);
     }
 
     @Override
@@ -56,7 +56,12 @@ public class ScannerHmacFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         try {
-            var cached = new CachedBodyRequest(request);
+            byte[] body = RequestEnvelopeFilter.body(request);
+            if (body == null) {
+                RequestEnvelopeFilter.reject(request, response);
+                return;
+            }
+            var cached = new CachedBodyRequest(request, body);
             String timestamp = requiredHeader(request, "X-Wambe-Timestamp");
             String nonce = requiredHeader(request, "X-Wambe-Nonce");
             String suppliedSignature = requiredHeader(request, "X-Wambe-Signature");

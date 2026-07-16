@@ -6,6 +6,7 @@ import com.wambe.api.generated.model.ScannerCallbackRequest;
 import com.wambe.api.integration.storage.ObjectStoragePort;
 import com.wambe.api.media.persistence.MediaEntity;
 import com.wambe.api.media.persistence.MediaRepository;
+import com.wambe.api.observability.WambeMetrics;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -23,16 +24,19 @@ public class ScannerCallbackService {
     private final MediaRepository media;
     private final ObjectStoragePort storage;
     private final RlsContext rls;
+    private final WambeMetrics metrics;
 
     public ScannerCallbackService(
             JdbcTemplate jdbcTemplate,
             MediaRepository media,
             ObjectStoragePort storage,
-            RlsContext rls) {
+            RlsContext rls,
+            WambeMetrics metrics) {
         this.jdbcTemplate = jdbcTemplate;
         this.media = media;
         this.storage = storage;
         this.rls = rls;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -88,6 +92,7 @@ public class ScannerCallbackService {
             entity.reject(request.getDetectedMimeType().getValue(), rejection, now());
             storage.delete(entity.getQuarantinePath());
         }
+        metrics.scanResult(result);
         jdbcTemplate.update("""
                 update scan_jobs
                    set status = 'completed', lease_expires_at = null, updated_at = ?

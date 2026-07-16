@@ -45,3 +45,77 @@ groups:
           runbook: api-latency
         annotations:
           summary: API p95 latency has exceeded two seconds for ten minutes
+
+      - alert: WambeScanJobAgeHigh
+        expr: max_over_time(wambe_scan_job_age_seconds_max{job="wambe-api"}[15m]) > 600
+        for: 5m
+        labels:
+          severity: warning
+          runbook: scanner-backlog
+        annotations:
+          summary: A leased scan job was more than ten minutes old
+
+      - alert: WambeRetentionFailed
+        expr: increase(wambe_retention_outcome_total{job="wambe-api",outcome="failure"}[25h]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          runbook: retention-failure
+        annotations:
+          summary: A retention run failed
+
+      - alert: WambeRetentionRunMissing
+        expr: |
+          wambe_retention_last_success_seconds{job="wambe-api"} > 0
+          and
+          time() - wambe_retention_last_success_seconds{job="wambe-api"} > 90000
+        for: 15m
+        labels:
+          severity: critical
+          runbook: retention-failure
+        annotations:
+          summary: No successful retention run was observed in twenty-five hours
+
+      - alert: WambeSecurityBoundaryRejectionBurst
+        expr: |
+          sum(rate(wambe_security_envelope_rejected_total[5m]))
+          + sum(rate(wambe_security_jwt_rejected_total[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          runbook: security-boundary-rejections
+        annotations:
+          summary: Request-envelope or host-token rejections are elevated
+
+  - name: wambe-media-scanner
+    rules:
+      - alert: WambeScannerUnavailable
+        expr: up{job="media-scanner"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          runbook: scanner-backlog
+        annotations:
+          summary: Wambe media scanner has been unavailable for three minutes
+
+      - alert: WambeScannerDestinationRejected
+        expr: increase(wambe_scanner_destination_rejected_total{job="media-scanner"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          runbook: scanner-destination-rejection
+        annotations:
+          summary: The scanner rejected a non-allowlisted outbound destination
+
+      - alert: WambeScanRejectionRateHigh
+        expr: |
+          sum(rate(wambe_scan_result_total{job="wambe-api",result="rejected"}[15m]))
+          /
+          clamp_min(sum(rate(wambe_scan_result_total{job="wambe-api"}[15m])), 0.001)
+          > 0.25
+        for: 10m
+        labels:
+          severity: warning
+          runbook: scanner-backlog
+        annotations:
+          summary: More than twenty-five percent of completed scans are rejected

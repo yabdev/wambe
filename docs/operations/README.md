@@ -6,17 +6,21 @@ target environment's change controls.
 
 ## Release posture
 
-**Current posture: not ready for production.** Local builds and tests pass, and
-credential-free CI/deployment templates now exist. Production remains blocked by:
+**Current posture: staging and production no-go.** Independent Security retest closed
+SEC-001, SEC-002, SEC-003, SEC-004 and SEC-008 at the local implementation boundary.
+Operations still cannot certify a release because:
 
-1. SEC-001: unbounded request buffering before scanner HMAC authentication.
-2. SEC-002: deployed profiles do not fail startup on the known default scanner secret.
-3. Real staging evidence for Supabase/Resend auth, storage, live ClamAV, Google Maps,
-   Scheduler OIDC, retention, external previews, telemetry and rollback.
-4. A successful CI security workflow with `NVD_API_KEY` and full-history Gitleaks.
+1. US-003 has no immutable release commit or accessible GitHub repository, so no CI,
+   Security, image or provenance evidence can bind to one source revision.
+2. SEC-011 through SEC-014 remain open, including the Gitleaks-blocking synthetic
+   fixture and the undeployed Cloud Run scanner trust boundary.
+3. No isolated staging Supabase, GCP, Vercel, Resend, Maps or telemetry resources exist;
+   all 42 staging controls, rollback and restore remain unexecuted.
+4. NVD-backed Java analysis has no configured API key.
 
-Operations controls such as internal scanner ingress, concurrency limits and mandatory
-Secret Manager injection reduce risk but do not close SEC-001 or SEC-002.
+Operations controls such as internal scanner ingress, API-only IAM invocation,
+concurrency limits and mandatory Secret Manager injection are required defence in depth;
+templates alone do not close security findings.
 
 ## Ownership and environments
 
@@ -37,9 +41,10 @@ accounts between staging and production.
 ## Delivery gates
 
 The required GitHub `CI` workflow verifies contracts, both Java services, frontend
-static/unit/browser/accessibility checks, and both container builds. The scheduled
-`Security` workflow scans Git history, npm dependency graphs and Java dependencies.
-Configure `NVD_API_KEY` as a repository secret before treating Java scanning as evidence.
+static/unit/browser/accessibility checks, and both container build definitions. The
+manual/weekly `Security` workflow scans Git history, npm dependency graphs and Java
+dependencies. Configure `NVD_API_KEY`, then manually dispatch `Security` on the exact
+release SHA before publication; a weekly run on another SHA is not release evidence.
 
 Local equivalents:
 
@@ -49,11 +54,32 @@ Local equivalents:
 .\scripts\check-deploy-env.ps1 -Environment staging
 ```
 
-A release uses immutable image digests. Never rebuild between staging and production,
-never deploy `latest`, and retain the previous healthy Cloud Run revision and Vercel
+A release uses immutable image digests. The CI image jobs validate that both Dockerfiles
+build from the selected source, but those local images are not deployment artifacts.
+After green CI and Security on the exact SHA, `release-images.yml` performs the one
+canonical deployment build, labels it with the source revision, and publishes it only
+through the protected staging environment. Staging must test those exact digests. A
+future production promotion must consume the same digest references without rerunning
+this build; `release-images.yml` deliberately has no production option.
+
+Never deploy `latest`, and retain the previous healthy Cloud Run revision and Vercel
 deployment for rollback. GitHub environment protection should require Product Owner
 approval for production and should hold cloud credentials only through short-lived
 workload identity, not static JSON keys.
+
+`release-images.yml` refuses publication unless both `CI` and `Security` have a
+successful run for the selected commit. Its retained `release-images-staging-<sha>`
+artifact records `apiImageDigest` and `scannerImageDigest` plus BuildKit metadata.
+Copy those digest fields into the staging evidence record, deploy exactly those
+digest-addressed images, and retain the workflow URL plus registry SBOM/provenance
+attestation inspection as `BUILD-004` evidence.
+
+The stable control IDs in `staging-release-checklist.md` map one-to-one to
+`docs/sdlc/stories/US-003-secure-us-002-staging-release/STAGING_EVIDENCE.example.json`.
+Copy the example to an access-controlled evidence location, replace the zero commit with
+the release SHA, and update each result under `STAGING_EVIDENCE_SCHEMA.json`. `NOT_RUN`
+is not evidence of readiness. Store only redacted workflow URLs, revision/digest IDs,
+request IDs and outcomes.
 
 ## Required deployed configuration
 
@@ -63,15 +89,16 @@ logs, workflow output, screenshots or evidence files.
 
 | Component | Required controls |
 |---|---|
-| API | `SPRING_PROFILES_ACTIVE=staging` or `production`; Supabase storage; exact HTTPS CORS origin; separate Flyway/application DB credentials; rotated scanner secret; Scheduler issuer/audience/subject; empty `INTERNAL_JOB_KEY` |
-| Scanner | Same rotated scanner secret; internal ingress; concurrency one; bounded max scale; no public invoker |
+| API | `SPRING_PROFILES_ACTIVE=staging` or `production`; Supabase storage; exact HTTPS CORS origin; separate Flyway/application DB credentials; rotated scanner secret; exact HTTPS `SCANNER_URL` and identical `SCANNER_AUDIENCE`; Scheduler issuer/audience/subject; empty `INTERNAL_JOB_KEY` |
+| Scanner | Same rotated scanner secret; exact Supabase/API destination origins; internal ingress; API-service-account invoker only; concurrency one; bounded max scale; no public invoker |
 | Web | Exact API/site URLs; real Supabase and restricted Maps keys; `NEXT_PUBLIC_DEMO_MODE` absent/false |
 | Scheduler | Dedicated service account, exact API audience, invoker permission only |
 | Telemetry | TLS, private admin access, encrypted volumes, no event/venue/media payloads in logs |
 
-Application defaults are development conveniences, not deployment values. Until
-SEC-002 adds runtime fail-fast validation, the deploy pipeline and post-deploy smoke test
-must reject the known local secret.
+Known development credentials exist only in explicit `local`/`test` profiles. Every
+other profile fails startup on a missing, short or known scanner secret; the API also
+fails on a local job key or mismatched scanner identity audience. The pre-deploy script
+must agree with these runtime checks.
 
 ## Deployment sequence
 
@@ -131,10 +158,11 @@ These are pilot objectives, not contractual promises:
 | Daily retention | every scheduled run succeeds | any failed/missed daily run |
 | API latency | observe p50/p95/p99 by route | p95 above 2 seconds for 10 minutes |
 
-`infra/observability/prometheus/wambe-alerts.yml` implements only metrics already
-available through HTTP/Actuator. Scan queue age, retention outcome, auth callback and
-telemetry-drop metrics are not yet exported; their alerts remain blocked application
-instrumentation work and must not be represented as active.
+`infra/observability/prometheus/wambe-alerts.yml` now consumes bounded-label backend
+metrics for request-envelope/JWT/destination rejection, observed scan-job age, scan
+results and retention outcomes. Auth callback, provider quota and telemetry-drop signals
+still require frontend/provider configuration and must not be represented as active
+until staging evidence proves delivery.
 
 Dashboard minimums are RED (rate, errors, duration), Cloud Run instance/concurrency/
 memory, PostgreSQL pool/quota, storage use, scan job age/result and retention outcome.

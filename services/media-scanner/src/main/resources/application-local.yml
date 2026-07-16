@@ -1,0 +1,7 @@
+wambe:
+  scanner:
+    hmac-secret: ${SCANNER_HMAC_SECRET:local-scanner-secret-change-me}
+    destinations:
+      supabase-url: ""
+      api-base-url: ${API_BASE_URL:http://api:8080}
+      allow-local: true

@@ -114,6 +114,13 @@ test("landing page introduces the celebration experience", async ({ page }) => {
   expect(results.violations).toEqual([]);
 });
 
+test("auth navigation rejects a hostile return target", async ({ page }) => {
+  await page.goto(`/auth?next=${encodeURIComponent(String.raw`/\evil.example`)}`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+
+  await expect(page).toHaveURL(/\/events$/);
+});
+
 test("dashboard has no automatically detectable accessibility violations", async ({
   page,
 }) => {

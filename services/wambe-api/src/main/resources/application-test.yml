@@ -1,0 +1,5 @@
+wambe:
+  scanner:
+    hmac-secret: test-scanner-secret-change-me
+  internal-jobs:
+    local-key: test-jobs-key

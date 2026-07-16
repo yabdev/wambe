@@ -49,6 +49,9 @@ management:
         enabled: true
 
 wambe:
+  security:
+    request-envelope:
+      max-bytes: 16384
   auth:
     issuer: ${SUPABASE_ISSUER:https://example.supabase.co/auth/v1}
     audience: authenticated
@@ -57,11 +60,12 @@ wambe:
   public-base-url: ${PUBLIC_BASE_URL:http://localhost:3000}
   api-base-url: ${API_BASE_URL:http://localhost:8080}
   scanner:
-    hmac-secret: ${SCANNER_HMAC_SECRET:local-scanner-secret-change-me}
+    hmac-secret: ${SCANNER_HMAC_SECRET:}
     callback-tolerance: PT5M
     url: ${SCANNER_URL:http://localhost:8081}
+    audience: ${SCANNER_AUDIENCE:}
   internal-jobs:
-    local-key: ${INTERNAL_JOB_KEY:local-jobs-secret-change-me}
+    local-key: ${INTERNAL_JOB_KEY:}
     scheduler-subject: ${SCHEDULER_SUBJECT:}
     issuer: ${SCHEDULER_ISSUER:https://accounts.google.com}
     jwks-uri: ${SCHEDULER_JWKS_URI:https://www.googleapis.com/oauth2/v3/certs}

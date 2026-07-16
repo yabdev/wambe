@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.json.JsonMapper;
@@ -23,8 +24,9 @@ public class ScanService {
 
     private final ClamAvClient clamAv;
     private final JsonMapper jsonMapper;
-    private final RestClient restClient;
+    private final RestClient callbackClient;
     private final HttpClient httpClient;
+    private final ScannerDestinationPolicy destinationPolicy;
     private final byte[] secret;
     private final int maxBytes;
 
@@ -32,19 +34,31 @@ public class ScanService {
             ClamAvClient clamAv,
             JsonMapper jsonMapper,
             RestClient.Builder restClientBuilder,
+            ScannerDestinationPolicy destinationPolicy,
             @Value("${wambe.scanner.hmac-secret}") String secret,
             @Value("${wambe.scanner.max-bytes}") int maxBytes) {
         this.clamAv = clamAv;
         this.jsonMapper = jsonMapper;
-        this.restClient = restClientBuilder.build();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
+                .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
+        var callbackHttpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build();
+        var callbackRequestFactory = new JdkClientHttpRequestFactory(callbackHttpClient);
+        callbackRequestFactory.setReadTimeout(Duration.ofSeconds(10));
+        this.callbackClient = restClientBuilder
+                .requestFactory(callbackRequestFactory)
+                .build();
+        this.destinationPolicy = destinationPolicy;
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
         this.maxBytes = maxBytes;
     }
 
     public void scan(ScanRequest request) {
+        destinationPolicy.validate(request);
         ScanResult result;
         try {
             byte[] content = download(request);
@@ -61,6 +75,8 @@ public class ScanService {
                     case CLEAN -> clean(request, content, detectedType, digest);
                 };
             }
+        } catch (OutboundRedirectException exception) {
+            throw exception;
         } catch (Exception exception) {
             result = ScanResult.rejected(
                     "application/octet-stream",
@@ -82,6 +98,9 @@ public class ScanService {
                     .PUT(HttpRequest.BodyPublishers.ofByteArray(content))
                     .build();
             HttpResponse<Void> response = httpClient.send(upload, HttpResponse.BodyHandlers.discarding());
+            if (isRedirect(response.statusCode())) {
+                throw new OutboundRedirectException();
+            }
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 return ScanResult.rejected(detectedType, digest, "scan_failed");
             }
@@ -97,7 +116,12 @@ public class ScanService {
                 .build();
         HttpResponse<InputStream> response =
                 httpClient.send(download, HttpResponse.BodyHandlers.ofInputStream());
+        if (isRedirect(response.statusCode())) {
+            response.body().close();
+            throw new OutboundRedirectException();
+        }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            response.body().close();
             throw new IllegalStateException("Storage download failed");
         }
         try (InputStream input = response.body()) {
@@ -159,15 +183,19 @@ public class ScanService {
             UUID nonce = UUID.randomUUID();
             String digest = DispatchHmacFilter.sha256(json);
             String signature = hmac(timestamp + "\n" + nonce + "\n" + digest);
-            restClient.post()
+            var response = callbackClient.post()
                     .uri(request.callbackUrl())
                     .contentType(MediaType.APPLICATION_JSON)
+                    .contentLength(json.length)
                     .header("X-Wambe-Timestamp", timestamp)
                     .header("X-Wambe-Nonce", nonce.toString())
                     .header("X-Wambe-Signature", signature)
                     .body(json)
                     .retrieve()
                     .toBodilessEntity();
+            if (response.getStatusCode().is3xxRedirection()) {
+                throw new OutboundRedirectException();
+            }
         } catch (Exception exception) {
             throw new IllegalStateException("Scanner callback failed", exception);
         }
@@ -182,6 +210,13 @@ public class ScanService {
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }
+    }
+
+    private boolean isRedirect(int statusCode) {
+        return statusCode >= 300 && statusCode < 400;
+    }
+
+    private static final class OutboundRedirectException extends RuntimeException {
     }
 
     private record ScanResult(

@@ -1,7 +1,10 @@
 package com.wambe.api.config;
 
+import com.wambe.api.common.security.HostJwtClaimValidator;
 import com.wambe.api.common.security.InternalJobKeyFilter;
+import com.wambe.api.common.security.RequestEnvelopeFilter;
 import com.wambe.api.common.security.ScannerHmacFilter;
+import com.wambe.api.observability.WambeMetrics;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +13,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
@@ -36,18 +38,20 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain scannerChain(
             HttpSecurity http,
+            RequestEnvelopeFilter requestEnvelopeFilter,
             ScannerHmacFilter scannerHmacFilter) throws Exception {
         return http
                 .securityMatcher("/api/v1/internal/scanner/**")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(scannerHmacFilter, AnonymousAuthenticationFilter.class)
+                .addFilterBefore(requestEnvelopeFilter, ScannerHmacFilter.class)
                 .authorizeHttpRequests(auth -> auth.anyRequest().hasRole("SCANNER"))
                 .build();
     }
 
     @Bean
-    @Order(2)
+    @Order(3)
     SecurityFilterChain internalJobsChain(
             HttpSecurity http,
             InternalJobKeyFilter internalJobKeyFilter,
@@ -66,7 +70,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(3)
+    @Order(4)
     SecurityFilterChain hostChain(
             HttpSecurity http,
             @Qualifier("corsConfigurationSource") CorsConfigurationSource corsSource,
@@ -79,7 +83,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/health/**",
-                                "/dev-storage/**",
                                 "/api/v1/public/**")
                         .permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
@@ -92,7 +95,8 @@ public class SecurityConfig {
     JwtDecoder hostJwtDecoder(
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}") String jwksUri,
             @Value("${wambe.auth.issuer}") String issuer,
-            @Value("${wambe.auth.audience}") String audience) {
+            @Value("${wambe.auth.audience}") String audience,
+            HostJwtClaimValidator hostJwtClaimValidator) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
         OAuth2TokenValidator<Jwt> audienceValidator = jwt -> jwt.getAudience().contains(audience)
                 ? OAuth2TokenValidatorResult.success()
@@ -100,8 +104,14 @@ public class SecurityConfig {
                         new OAuth2Error("invalid_token", "Required audience is missing", null));
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
                 JwtValidators.createDefaultWithIssuer(issuer),
-                audienceValidator));
+                audienceValidator,
+                hostJwtClaimValidator));
         return decoder;
+    }
+
+    @Bean
+    HostJwtClaimValidator hostJwtClaimValidator(WambeMetrics metrics) {
+        return new HostJwtClaimValidator(metrics);
     }
 
     @Bean
@@ -171,6 +181,13 @@ public class SecurityConfig {
 
     @Bean
     FilterRegistrationBean<ScannerHmacFilter> disableScannerFilterRegistration(ScannerHmacFilter filter) {
+        var registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    FilterRegistrationBean<RequestEnvelopeFilter> disableEnvelopeFilterRegistration(RequestEnvelopeFilter filter) {
         var registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;

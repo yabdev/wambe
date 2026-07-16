@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeRedirectPath } from "@/lib/auth/safe-redirect-path";
+import { getServerSiteOrigin } from "@/lib/auth/site-origin";
 
 export async function proxy(request: NextRequest) {
   if (
@@ -44,7 +46,13 @@ export async function proxy(request: NextRequest) {
   if (!user && request.nextUrl.pathname.startsWith("/events")) {
     const target = request.nextUrl.clone();
     target.pathname = "/auth";
-    target.searchParams.set("next", request.nextUrl.pathname);
+    target.searchParams.set(
+      "next",
+      safeRedirectPath(
+        request.nextUrl.pathname,
+        getServerSiteOrigin(request.nextUrl.origin),
+      ),
+    );
     return NextResponse.redirect(target);
   }
   return response;

@@ -28,11 +28,19 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<jackson2.version>2.21.5</jackson2.version>
 		<openapi-generator.version>7.23.0</openapi-generator.version>
 		<testcontainers.version>2.0.5</testcontainers.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>com.fasterxml.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${jackson2.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 			<dependency>
 				<groupId>org.testcontainers</groupId>
 				<artifactId>testcontainers-bom</artifactId>
@@ -78,6 +86,11 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.auth</groupId>
+			<artifactId>google-auth-library-oauth2-http</artifactId>
+			<version>1.48.0</version>
 		</dependency>
 
 		<dependency>

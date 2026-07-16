@@ -18,10 +18,13 @@ import java.util.HexFormat;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class DispatchHmacFilter extends OncePerRequestFilter {
 
     private final byte[] secret;
@@ -36,7 +39,7 @@ public class DispatchHmacFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().equals("/scan");
+        return !RequestEnvelopeFilter.isScanRequest(request);
     }
 
     @Override
@@ -45,7 +48,12 @@ public class DispatchHmacFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         try {
-            var cached = new CachedRequest(request);
+            byte[] body = RequestEnvelopeFilter.body(request);
+            if (body == null) {
+                RequestEnvelopeFilter.reject(response);
+                return;
+            }
+            var cached = new CachedRequest(request, body);
             String timestamp = required(request, "X-Wambe-Timestamp");
             String nonce = required(request, "X-Wambe-Nonce");
             String supplied = required(request, "X-Wambe-Signature").toLowerCase();
@@ -103,9 +111,9 @@ public class DispatchHmacFilter extends OncePerRequestFilter {
     private static final class CachedRequest extends HttpServletRequestWrapper {
         private final byte[] body;
 
-        private CachedRequest(HttpServletRequest request) throws IOException {
+        private CachedRequest(HttpServletRequest request, byte[] body) {
             super(request);
-            body = request.getInputStream().readAllBytes();
+            this.body = body.clone();
         }
 
         @Override

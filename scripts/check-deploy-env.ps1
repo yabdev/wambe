@@ -8,7 +8,26 @@ $ErrorActionPreference = "Stop"
 $missing = [System.Collections.Generic.List[string]]::new()
 $invalid = [System.Collections.Generic.List[string]]::new()
 
+function Test-ExactHttpsOrigin {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
+    $uri = $null
+    if (-not [Uri]::TryCreate($Value, [UriKind]::Absolute, [ref]$uri)) {
+        return $false
+    }
+    return $uri.Scheme -eq "https" -and
+        [string]::IsNullOrEmpty($uri.UserInfo) -and
+        $uri.IsDefaultPort -and
+        $uri.AbsolutePath -eq "/" -and
+        [string]::IsNullOrEmpty($uri.Query) -and
+        [string]::IsNullOrEmpty($uri.Fragment)
+}
+
 $required = @(
+    "SPRING_PROFILES_ACTIVE",
     "DATABASE_URL",
     "DATABASE_USER",
     "DATABASE_PASSWORD",
@@ -22,6 +41,7 @@ $required = @(
     "PUBLIC_BASE_URL",
     "API_BASE_URL",
     "SCANNER_URL",
+    "SCANNER_AUDIENCE",
     "SCANNER_HMAC_SECRET",
     "SCHEDULER_JWKS_URI",
     "SCHEDULER_ISSUER",
@@ -42,7 +62,10 @@ foreach ($name in $required) {
 }
 
 $scannerSecret = [Environment]::GetEnvironmentVariable("SCANNER_HMAC_SECRET")
-if ($scannerSecret -eq "local-scanner-secret-change-me" -or
+if ($scannerSecret -in @(
+        "local-scanner-secret-change-me",
+        "test-scanner-secret-change-me"
+    ) -or
     (-not [string]::IsNullOrWhiteSpace($scannerSecret) -and $scannerSecret.Length -lt 32)) {
     $invalid.Add("SCANNER_HMAC_SECRET must be rotated and contain at least 32 characters")
 }
@@ -56,12 +79,38 @@ if ([Environment]::GetEnvironmentVariable("STORAGE_TYPE") -ne "supabase") {
     $invalid.Add("STORAGE_TYPE must equal supabase")
 }
 
+$activeProfile = [Environment]::GetEnvironmentVariable("SPRING_PROFILES_ACTIVE")
+if ($activeProfile -ne $Environment) {
+    $invalid.Add("SPRING_PROFILES_ACTIVE must equal $Environment")
+}
+
+$scannerUrl = [Environment]::GetEnvironmentVariable("SCANNER_URL")
+$scannerAudience = [Environment]::GetEnvironmentVariable("SCANNER_AUDIENCE")
+if (-not (Test-ExactHttpsOrigin $scannerUrl)) {
+    $invalid.Add("SCANNER_URL must be an exact HTTPS service origin")
+}
+if (-not (Test-ExactHttpsOrigin $scannerAudience)) {
+    $invalid.Add("SCANNER_AUDIENCE must be an exact HTTPS service origin")
+}
+if (-not [string]::IsNullOrWhiteSpace($scannerUrl) -and
+    -not [string]::IsNullOrWhiteSpace($scannerAudience) -and
+    $scannerUrl.TrimEnd("/") -cne $scannerAudience.TrimEnd("/")) {
+    $invalid.Add("SCANNER_AUDIENCE must exactly match SCANNER_URL")
+}
+
+foreach ($originName in @("SUPABASE_URL", "API_BASE_URL", "PUBLIC_BASE_URL", "NEXT_PUBLIC_SITE_URL")) {
+    if (-not (Test-ExactHttpsOrigin (
+            [Environment]::GetEnvironmentVariable($originName)))) {
+        $invalid.Add("$originName must be an exact HTTPS origin")
+    }
+}
+
 if ([Environment]::GetEnvironmentVariable("NEXT_PUBLIC_DEMO_MODE") -eq "true") {
     $invalid.Add("NEXT_PUBLIC_DEMO_MODE must not be true")
 }
 
 $cors = [Environment]::GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")
-if ($cors -match "localhost|127\.0\.0\.1|\*") {
+if (-not (Test-ExactHttpsOrigin $cors) -or $cors -match "localhost|127\.0\.0\.1|\*") {
     $invalid.Add("CORS_ALLOWED_ORIGINS must contain only exact deployed HTTPS origins")
 }
 

@@ -40,8 +40,14 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: staging
             - name: SCANNER_HMAC_SECRET
               valueFrom:
                 secretKeyRef:
                   name: wambe-scanner-hmac
                   key: latest
+            - name: SUPABASE_URL
+              value: SUPABASE_URL
+            - name: API_BASE_URL
+              value: API_ORIGIN

@@ -2,24 +2,42 @@ name: Release images
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: Protected GitHub environment authorizing artifact publication
-        required: true
-        type: choice
-        options: [staging, production]
 
 permissions:
+  actions: read
   contents: read
   id-token: write
   attestations: write
 
 jobs:
   publish:
-    environment: ${{ inputs.environment }}
+    environment: staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Require green CI and Security on this commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const requiredWorkflows = ["ci.yml", "security.yml"];
+            for (const workflow_id of requiredWorkflows) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id,
+                head_sha: context.sha,
+                status: "completed",
+                per_page: 100,
+              });
+              const successful = data.workflow_runs.some(
+                (run) => run.conclusion === "success",
+              );
+              if (!successful) {
+                core.setFailed(
+                  `No successful ${workflow_id} run exists for ${context.sha}`,
+                );
+              }
+            }
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -29,20 +47,69 @@ jobs:
         run: gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
       - uses: docker/setup-buildx-action@v3
       - name: Build and publish API
+        id: build-api
         uses: docker/build-push-action@v6
         with:
           context: .
           file: services/wambe-api/Dockerfile
           push: true
           tags: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/wambe/wambe-api:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           provenance: mode=max
           sbom: true
       - name: Build and publish scanner
+        id: build-scanner
         uses: docker/build-push-action@v6
         with:
           context: .
           file: services/media-scanner/Dockerfile
           push: true
           tags: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/wambe/media-scanner:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           provenance: mode=max
           sbom: true
+      - name: Capture immutable image digests
+        shell: bash
+        env:
+          API_DIGEST: ${{ steps.build-api.outputs.digest }}
+          API_IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/wambe/wambe-api
+          API_METADATA: ${{ steps.build-api.outputs.metadata }}
+          SCANNER_DIGEST: ${{ steps.build-scanner.outputs.digest }}
+          SCANNER_IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/wambe/media-scanner
+          SCANNER_METADATA: ${{ steps.build-scanner.outputs.metadata }}
+        run: |
+          set -euo pipefail
+          digest_pattern='^sha256:[a-f0-9]{64}$'
+          [[ "$API_DIGEST" =~ $digest_pattern ]]
+          [[ "$SCANNER_DIGEST" =~ $digest_pattern ]]
+          printf '%s\n' "$API_METADATA" | jq '.' > api-build-metadata.json
+          printf '%s\n' "$SCANNER_METADATA" | jq '.' > scanner-build-metadata.json
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg environment "staging" \
+            --arg apiImage "${API_IMAGE}@${API_DIGEST}" \
+            --arg apiDigest "$API_DIGEST" \
+            --arg scannerImage "${SCANNER_IMAGE}@${SCANNER_DIGEST}" \
+            --arg scannerDigest "$SCANNER_DIGEST" \
+            '{
+              commit: $commit,
+              environment: $environment,
+              apiImageReference: $apiImage,
+              apiImageDigest: $apiDigest,
+              scannerImageReference: $scannerImage,
+              scannerImageDigest: $scannerDigest
+            }' > release-images.json
+      - name: Retain release image evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-images-staging-${{ github.sha }}
+          path: |
+            release-images.json
+            api-build-metadata.json
+            scanner-build-metadata.json
+          if-no-files-found: error
+          retention-days: 90

@@ -1,0 +1,67 @@
+story_id: US-004
+title: Complete Wambe staging release controls
+product_owner: Human user
+methodology: Agile
+state: ACTIVE
+current_stage: qa
+active_persona: null
+implementation:
+  profile: backend-only
+  order: backend-first
+  contracts:
+    - ../US-002-create-publish-event/contracts/openapi-v1.yaml
+    - ../US-002-create-publish-event/contracts/product-events-v1.schema.json
+    - contracts/staging-evidence-v1.1.schema.json
+handoff:
+  summary: Product Owner approved backend implementation and authenticated yabdev access to the private yabdev/wambe repository is confirmed with push and workflow scope; QA remains blocked until the exact-SHA release and isolated staging activation checkpoint is complete
+  blockers:
+    - "No authenticated staging provider control plane or NVD-backed evidence source is established; requirements must preserve these as access dependencies"
+    - "OSV-Scanner 2.4.0 reports CVE-2026-54515 against patched jackson-databind 2.21.5 because the current OSV record contains conflicting open-ended Maven ranges; upstream FasterXML and NVD identify 2.21.5 as fixed, so AC-004 remains unproven pending corrected feed data and independent Security adjudication"
+    - "The expanded Node policy checker is already invoked by CI, but explicit AJV validation of the v1.1 example was only run locally; delivery ownership must add or confirm the v1.1 AJV workflow step before the exact-SHA gate"
+    - "OPS-007 requires a backup staging/on-call contact recorded outside the repository or a later explicit Product Owner waiver"
+    - "Private scanner routing, Supabase restore/PITR, telemetry/alerting and provider quota capabilities need current free-tier evidence; any paid gap requires a focused Product Owner purchase-or-waive decision"
+    - "After backend approval and before QA starts, the founder/operator must activate the isolated staging target through authenticated provider tooling so QA and Security can obtain deployed evidence before the later Operations audit"
+  next_action: Create and push the reviewed release-candidate commit, then complete exact-SHA CI/Security, canonical image publication and isolated staging activation before invoking /persona-qa US-004
+gates:
+  intake: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#intake" }
+  requirements: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#requirements" }
+  ux: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#ux" }
+  architecture: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#architecture" }
+  implementation_backend: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#implementation--backend" }
+  implementation_frontend: { status: WAIVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#implementation--frontend" }
+  qa: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#qa" }
+  security: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#security" }
+  operations: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#operations" }
+  done: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#final-product-owner-notes" }
+decisions:
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: intake
+    decision: CREATED
+    reason: "P0 release-blocker follow-up for the founder/staging operator: resolve QA-001 and SEC-011 through SEC-014, establish the yabdev/wambe release baseline, and complete all 42 staging controls as PASS or explicitly PO-WAIVED; staging only, synthetic data, lowest-cost/free first, and pause before paid or destructive actions"
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: intake
+    decision: APPROVED
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: requirements
+    decision: APPROVED
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: ux
+    decision: APPROVED
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: architecture
+    decision: APPROVED
+    reason: Approved backend-only/backend-first profile, v1.1 staging-evidence contract and founder-operated pre-QA staging activation checkpoint
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: implementation_frontend
+    decision: WAIVED
+    reason: Approved backend-only architecture adds no frontend implementation slice; QA retains all frontend staging and regression obligations
+  - date: "2026-07-16"
+    actor: Product Owner
+    stage: implementation_backend
+    decision: APPROVED
