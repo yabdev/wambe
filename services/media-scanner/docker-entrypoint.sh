@@ -14,4 +14,4 @@ until printf 'zPING\0' | nc -w 1 127.0.0.1 3310 2>/dev/null | grep -q PONG; do
   sleep 1
 done
 
-exec su -s /bin/sh -c 'exec java -XX:MaxRAMPercentage=70 -jar /app/media-scanner.jar' wambe
+exec su -s /bin/sh -c 'exec /opt/java/openjdk/bin/java -XX:MaxRAMPercentage=70 -jar /app/media-scanner.jar' wambe
