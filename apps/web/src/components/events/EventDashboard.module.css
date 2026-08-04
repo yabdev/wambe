@@ -36,6 +36,13 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 }
 
+.loadError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .eventCard {
   overflow: hidden;
 }
@@ -135,11 +142,17 @@
 
 .skeleton {
   min-height: 310px;
-  background: linear-gradient(100deg, var(--surface-soft) 20%, var(--surface) 45%, var(--surface-soft) 70%);
-  background-size: 300% 100%;
-  animation: shimmer 1.4s infinite;
+  background:
+    linear-gradient(
+      to bottom,
+      var(--surface-soft) 0 61%,
+      var(--surface) 61% 100%
+    );
 }
 
-@keyframes shimmer {
-  to { background-position: -150% 0; }
+@media (max-width: 560px) {
+  .loadError {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }

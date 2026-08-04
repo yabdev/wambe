@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Event } from "@wambe/api-client";
@@ -10,6 +10,7 @@ import styles from "./EventManager.module.css";
 export function EventManager({ eventId }: { eventId: string }) {
   const router = useRouter();
   const [event, setEvent] = useState<Event>();
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
@@ -17,10 +18,29 @@ export function EventManager({ eventId }: { eventId: string }) {
   const deleteKey = useRef<string | undefined>(undefined);
   const unpublishDialog = useRef<HTMLDialogElement>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
+  const unpublishTrigger = useRef<HTMLButtonElement>(null);
+  const deleteTrigger = useRef<HTMLButtonElement>(null);
+
+  const loadEvent = useCallback(() => {
+    getHostApi()
+      .getEvent(eventId)
+      .then(setEvent)
+      .catch(() => {
+        setEvent(undefined);
+        setError("We couldn’t load this event. Your saved details have not changed.");
+      })
+      .finally(() => setLoading(false));
+  }, [eventId]);
 
   useEffect(() => {
-    getHostApi().getEvent(eventId).then(setEvent);
-  }, [eventId]);
+    loadEvent();
+  }, [loadEvent]);
+
+  function retryLoad() {
+    setLoading(true);
+    setError(undefined);
+    loadEvent();
+  }
 
   async function unpublish() {
     if (!event) return;
@@ -76,15 +96,42 @@ export function EventManager({ eventId }: { eventId: string }) {
     }
   }
 
+  if (loading) {
+    return (
+      <div aria-busy="true" className={styles.loading} role="status">
+        <span aria-hidden="true" className="spinner" /> Loading event…
+      </div>
+    );
+  }
+
   if (!event) {
-    return <div className={styles.loading}><span className="spinner" /> Loading event…</div>;
+    return (
+      <section className={`container ${styles.loadError}`} role="alert">
+        <p className="eyebrow">Event unavailable</p>
+        <h1>We couldn’t load this event.</h1>
+        <p className="muted">
+          Your saved details have not changed. Check your connection and try again.
+        </p>
+        <button className="button secondary" onClick={retryLoad} type="button">
+          Retry
+        </button>
+      </section>
+    );
   }
 
   return (
     <div className={`container ${styles.page}`}>
       <header className={styles.heading}>
         <div>
-          <span className={styles.badge}>{event.status}</span>
+          <span className={styles.badge}>
+            {event.status === "draft"
+              ? "In progress"
+              : event.status === "published"
+                ? "Published"
+                : event.status === "unpublished"
+                  ? "Unpublished"
+                  : "Deleted"}
+          </span>
           <h1>{event.title ?? "Untitled Wambe"}</h1>
           <p className="muted">
             Last saved {event.lastSavedAt?.toLocaleString("en-NG") ?? "recently"}
@@ -111,21 +158,37 @@ export function EventManager({ eventId }: { eventId: string }) {
           )}
           <Link className="button secondary" href={`/events/${event.id}/edit`}>Update details</Link>
           {event.status === "published" && (
-            <button className="button secondary" onClick={() => unpublishDialog.current?.showModal()} type="button">
+            <button
+              className="button secondary"
+              onClick={() => unpublishDialog.current?.showModal()}
+              ref={unpublishTrigger}
+              type="button"
+            >
               Unpublish event
             </button>
           )}
-          <button className="button danger" onClick={() => deleteDialog.current?.showModal()} type="button">
+          <button
+            className="button danger"
+            onClick={() => deleteDialog.current?.showModal()}
+            ref={deleteTrigger}
+            type="button"
+          >
             Delete event
           </button>
         </aside>
       </section>
 
-      <dialog className={styles.dialog} ref={unpublishDialog}>
+      <dialog
+        aria-describedby="unpublish-description"
+        aria-labelledby="unpublish-title"
+        className={styles.dialog}
+        onClose={() => unpublishTrigger.current?.focus()}
+        ref={unpublishDialog}
+      >
         <form method="dialog">
           <p className="eyebrow">Unpublish event</p>
-          <h2>Take this Wambe offline?</h2>
-          <p>The public page becomes unavailable, but your details and stable link are preserved for republishing.</p>
+          <h2 id="unpublish-title">Take this Wambe offline?</h2>
+          <p id="unpublish-description">The public page becomes unavailable, but your details and stable link are preserved for republishing.</p>
           <div>
             <button autoFocus className="button secondary" type="submit">Keep published</button>
             <button className="button danger" disabled={busy} onClick={(click) => { click.preventDefault(); void unpublish(); }} type="button">
@@ -135,11 +198,17 @@ export function EventManager({ eventId }: { eventId: string }) {
         </form>
       </dialog>
 
-      <dialog className={styles.dialog} ref={deleteDialog}>
+      <dialog
+        aria-describedby="delete-description"
+        aria-labelledby="delete-title"
+        className={styles.dialog}
+        onClose={() => deleteTrigger.current?.focus()}
+        ref={deleteDialog}
+      >
         <form method="dialog">
           <p className="eyebrow">Delete event</p>
-          <h2>Delete this Wambe?</h2>
-          <p>It disappears from your workspace immediately. Associated uploaded media is scheduled for permanent purge after 30 days.</p>
+          <h2 id="delete-title">Delete this Wambe?</h2>
+          <p id="delete-description">It disappears from your workspace immediately. Associated uploaded media is scheduled for permanent purge after 30 days.</p>
           <div>
             <button autoFocus className="button secondary" type="submit">Cancel</button>
             <button className="button danger" disabled={busy} onClick={(click) => { click.preventDefault(); void remove(); }} type="button">

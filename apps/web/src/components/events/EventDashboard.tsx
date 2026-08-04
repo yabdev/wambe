@@ -1,10 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { Event } from "@wambe/api-client";
 import { getHostApi } from "@/lib/api/host-api";
 import styles from "./EventDashboard.module.css";
+
+function statusLabel(status: Event["status"]) {
+  switch (status) {
+    case "draft":
+      return "In progress";
+    case "published":
+      return "Published";
+    case "unpublished":
+      return "Unpublished";
+    case "deleted":
+      return "Deleted";
+  }
+}
 
 function EventCard({ event }: { event: Event }) {
   const isPublished = event.status === "published";
@@ -17,7 +30,7 @@ function EventCard({ event }: { event: Event }) {
       <div className={styles.cardBody}>
         <div>
           <span className={styles.badge} data-status={event.status}>
-            {event.status}
+            {statusLabel(event.status)}
           </span>
           <p className="muted">
             {event.startsAt
@@ -49,13 +62,23 @@ export function EventDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 
-  useEffect(() => {
+  const loadEvents = useCallback(() => {
     getHostApi()
       .listEvents()
       .then(setEvents)
       .catch(() => setError("We couldn't load your Wambes. Please try again."))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    void loadEvents();
+  }, [loadEvents]);
+
+  function retryLoad() {
+    setLoading(true);
+    setError(undefined);
+    loadEvents();
+  }
 
   if (loading) {
     return (
@@ -68,7 +91,14 @@ export function EventDashboard() {
   }
 
   if (error) {
-    return <div className="alert error" role="alert">{error}</div>;
+    return (
+      <div className={`alert error ${styles.loadError}`} role="alert">
+        <p>{error}</p>
+        <button className="button secondary" onClick={retryLoad} type="button">
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (events.length === 0) {

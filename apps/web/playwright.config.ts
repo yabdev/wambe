@@ -13,7 +13,11 @@ export default defineConfig({
     command: "npm run dev",
     url: "http://127.0.0.1:3000/events",
     reuseExistingServer: !process.env.CI,
-    env: { NEXT_PUBLIC_DEMO_MODE: "true" },
+    env: {
+      NEXT_PUBLIC_DEMO_MODE: "true",
+      NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3000",
+      NEXT_PUBLIC_WAMBE_API_URL: "http://127.0.0.1:8080/api/v1",
+    },
     timeout: 120_000,
   },
   projects: [

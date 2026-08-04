@@ -1,0 +1,68 @@
+story_id: US-005
+title: Polish Wambe frontend interactions and motion
+product_owner: Human user
+methodology: Agile
+state: ACTIVE
+current_stage: qa
+active_persona: null
+implementation:
+  profile: frontend-only
+  order: frontend-first
+  contracts:
+    - "PublicMetadataResult: available | unavailable | retryable"
+    - "SavePhase with derived unsaved-exit policy"
+    - "Local host resource states: loading | ready | error"
+    - "CSS focus, motion-duration, easing and reduced-motion tokens"
+    - "Production-build mobile performance profile with lab interaction limitation"
+handoff:
+  summary: Frontend implementation is complete with privacy-safe guest outcomes, Quiet Inline host recovery, accessible bounded motion, full frontend regression coverage, a passing production build, and performance medians within every approved budget
+  blockers:
+    - "No production or authenticated-staging analytics baseline exists; this story uses local synthetic evidence and opt-in usability sessions and cannot establish conversion impact"
+    - "US5-AC-009 requires at least five representative host-profile and five representative guest-profile sessions; proxy evidence must be reported separately and does not satisfy the threshold without an explicit Product Owner limitation decision"
+    - "True field INP is unavailable without production traffic or prohibited tracking; recorded interaction evidence is a labelled local lab Event Timing candidate, not field Core Web Vitals evidence"
+  next_action: "QA executes the US-005 regression and acceptance-criteria traceability; US5-AC-009 usability sessions still require real host/guest participants or an explicit Product Owner limitation decision"
+gates:
+  intake: { status: APPROVED, updated: "2026-07-31", artifact: "ARTIFACTS.md#intake" }
+  requirements: { status: APPROVED, updated: "2026-07-31", artifact: "ARTIFACTS.md#requirements" }
+  ux: { status: APPROVED, updated: "2026-07-31", artifact: "ARTIFACTS.md#ux" }
+  architecture: { status: APPROVED, updated: "2026-07-31", artifact: "ARTIFACTS.md#architecture" }
+  implementation_backend: { status: WAIVED, updated: "2026-07-31", artifact: "ARTIFACTS.md#implementation--backend", reason: "Product Owner-approved frontend-only architecture profile" }
+  implementation_frontend: { status: APPROVED, updated: "2026-08-04", artifact: "ARTIFACTS.md#implementation--frontend" }
+  qa: { status: READY, updated: "2026-08-04", artifact: "ARTIFACTS.md#qa" }
+  security: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#security" }
+  operations: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#operations" }
+  done: { status: BLOCKED, updated: null, artifact: "ARTIFACTS.md#final-product-owner-notes" }
+decisions:
+  - date: "2026-07-31"
+    actor: Product Owner
+    stage: intake
+    decision: CREATED
+    reason: "P1 polish of the existing Wambe frontend for event hosts and guests on mobile and desktop; preserve approved flows, accessibility and API contracts, and prototype before production changes using Emil Kowalski's design-engineering skills"
+  - date: "2026-07-31"
+    actor: Product Owner
+    stage: intake
+    decision: APPROVED
+  - date: "2026-07-31"
+    actor: Product Owner
+    stage: requirements
+    decision: APPROVED
+  - date: "2026-07-31"
+    actor: Product Owner
+    stage: ux
+    decision: CLARIFIED
+    reason: "Preserve the implemented metadata-only guest page and remove any guest-side Copy or Share action from US-005; host publication sharing remains unchanged"
+  - date: "2026-07-31"
+    actor: Product Owner
+    stage: ux
+    decision: APPROVED
+    reason: "Selected the Quiet Inline actionable-feedback direction"
+  - date: "2026-07-31"
+    actor: Product Owner
+    stage: architecture
+    decision: APPROVED
+    reason: "Approved the frontend-only, frontend-first implementation profile and architecture contracts"
+  - date: "2026-08-04"
+    actor: Product Owner
+    stage: implementation_frontend
+    decision: APPROVED
+    reason: "Product Owner directed completion of the MVP in session; independent re-verification passed lint, typecheck, 75 unit tests, the production build, and all 30 Playwright tests across desktop and mobile Chromium"

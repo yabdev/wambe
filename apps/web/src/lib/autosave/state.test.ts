@@ -9,7 +9,10 @@ describe("saveReducer", () => {
 
     expect(dirty).toEqual({ phase: "dirty", message: "Unsaved changes" });
     expect(saving.message).toBe("Saving…");
-    expect(saved).toEqual({ phase: "saved", message: "Saved" });
+    expect(saved).toEqual({
+      phase: "saved",
+      message: "All changes saved",
+    });
   });
 
   it("keeps edits visibly unsaved while offline", () => {
@@ -26,6 +29,10 @@ describe("saveReducer", () => {
       { phase: "saving", message: "Saving…" },
       { type: "SAVE_FAILURE" },
     );
-    expect(failed).toEqual({ phase: "failed", message: "Couldn't save" });
+    expect(failed).toEqual({ phase: "failed", message: "Save failed" });
+    expect(saveReducer(failed, { type: "CHANGE" })).toEqual({
+      phase: "dirty",
+      message: "Unsaved changes",
+    });
   });
 });

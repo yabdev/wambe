@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { Event } from "@wambe/api-client";
 import { getHostApi } from "@/lib/api/host-api";
@@ -8,28 +8,70 @@ import styles from "./PublishSuccess.module.css";
 
 export function PublishSuccess({ eventId }: { eventId: string }) {
   const [event, setEvent] = useState<Event>();
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string>();
 
-  useEffect(() => {
-    getHostApi().getEvent(eventId).then(setEvent);
+  const loadEvent = useCallback(() => {
+    getHostApi()
+      .getEvent(eventId)
+      .then(setEvent)
+      .catch(() => {
+        setEvent(undefined);
+        setLoadError(true);
+      })
+      .finally(() => setLoading(false));
   }, [eventId]);
 
-  if (!event) {
-    return <div className={styles.loading}><span className="spinner" /> Preparing your link…</div>;
+  useEffect(() => {
+    loadEvent();
+  }, [loadEvent]);
+
+  function retryLoad() {
+    setLoading(true);
+    setLoadError(false);
+    loadEvent();
+  }
+
+  if (loading) {
+    return (
+      <div aria-busy="true" className={styles.loading} role="status">
+        <span aria-hidden="true" className="spinner" /> Preparing your link…
+      </div>
+    );
+  }
+
+  if (loadError || !event) {
+    return (
+      <section className={styles.loadError} role="alert">
+        <p className="eyebrow">Publication saved</p>
+        <h1>We couldn’t prepare your sharing link.</h1>
+        <p className="muted">Your event is still safe. Try loading the link again.</p>
+        <button className="button secondary" onClick={retryLoad} type="button">
+          Retry
+        </button>
+      </section>
+    );
   }
 
   const url = event.canonicalUrl ?? "";
   async function copy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyError(undefined);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+      setCopyError("We couldn’t copy the link. Select the address above and copy it manually.");
+    }
   }
 
   return (
-    <main id="main" className={styles.page}>
+    <section aria-labelledby="publish-success-title" className={styles.page}>
       <div className={styles.burst} aria-hidden="true">✦</div>
       <p className="eyebrow">Published beautifully</p>
-      <h1>Your celebration has a digital home.</h1>
+      <h1 id="publish-success-title">Your celebration has a digital home.</h1>
       <p className={styles.intro}>
         {event.title} is live. Keep the link close or send it straight to your people.
       </p>
@@ -57,6 +99,7 @@ export function PublishSuccess({ eventId }: { eventId: string }) {
             Share on WhatsApp
           </a>
         </div>
+        {copyError && <p className="field-error" role="alert">{copyError}</p>}
       </div>
       {!event.shareEligible && (
         <div className="alert">
@@ -68,6 +111,6 @@ export function PublishSuccess({ eventId }: { eventId: string }) {
         <Link className="button ghost" href="/events">Back to My Wambes</Link>
       </div>
       <div aria-live="polite" className="sr-only">{copied ? "Link copied" : ""}</div>
-    </main>
+    </section>
   );
 }

@@ -13,6 +13,13 @@
   --whatsapp: #167b4e;
   --danger: #a53c38;
   --warning: #875b13;
+  --focus: var(--coral);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --motion-press: 120ms;
+  --motion-status: 160ms;
+  --motion-progress: 220ms;
+  --motion-dialog: 220ms;
+  --motion-success: 280ms;
   --shadow-sm: 0 8px 24px rgb(66 43 31 / 8%);
   --shadow-md: 0 24px 60px rgb(66 43 31 / 14%);
   --radius-sm: 12px;
@@ -86,7 +93,7 @@ p {
 }
 
 :focus-visible {
-  outline: 3px solid var(--coral);
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 
@@ -142,13 +149,11 @@ p {
   background: var(--coral);
   color: white;
   font-weight: 750;
-  transition: transform 150ms ease, background 150ms ease, box-shadow 150ms ease;
-}
-
-.button:hover {
-  background: var(--coral-dark);
-  box-shadow: 0 10px 24px rgb(184 70 57 / 22%);
-  transform: translateY(-1px);
+  transition:
+    transform var(--motion-press) var(--ease-out-strong),
+    background-color var(--motion-status) ease,
+    border-color var(--motion-status) ease,
+    box-shadow var(--motion-status) ease;
 }
 
 .button.secondary {
@@ -156,11 +161,6 @@ p {
   background: var(--surface);
   color: var(--ink);
   box-shadow: none;
-}
-
-.button.secondary:hover {
-  border-color: var(--coral);
-  background: var(--coral-soft);
 }
 
 .button.ghost {
@@ -183,6 +183,10 @@ p {
   box-shadow: none;
 }
 
+.button:active:not(:focus-visible) {
+  transform: scale(0.98);
+}
+
 .icon-button {
   display: inline-grid;
   width: 46px;
@@ -191,6 +195,11 @@ p {
   border: 1px solid var(--line);
   border-radius: 50%;
   background: var(--surface);
+  transition: transform var(--motion-press) var(--ease-out-strong);
+}
+
+.icon-button:active:not(:focus-visible) {
+  transform: scale(0.98);
 }
 
 .field {
@@ -283,6 +292,23 @@ p {
   to { transform: rotate(360deg); }
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .button:hover {
+    background: var(--coral-dark);
+    box-shadow: 0 10px 24px rgb(184 70 57 / 22%);
+  }
+
+  .button.secondary:hover {
+    border-color: var(--coral);
+    background: var(--coral-soft);
+  }
+
+  .button.ghost:hover {
+    background: var(--surface-soft);
+    box-shadow: none;
+  }
+}
+
 @media (max-width: 767px) {
   .container {
     width: min(calc(100% - 24px), var(--content));
@@ -311,5 +337,10 @@ p {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .spinner {
+    border-right-color: currentColor;
+    animation: none !important;
   }
 }

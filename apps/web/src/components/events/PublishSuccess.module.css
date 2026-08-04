@@ -20,6 +20,11 @@
   color: white;
   font-size: 2.3rem;
   box-shadow: 0 0 0 18px var(--coral-soft), 0 22px 50px rgb(184 70 57 / 26%);
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity var(--motion-success) var(--ease-out-strong),
+    transform var(--motion-success) var(--ease-out-strong);
 }
 
 .page h1 {
@@ -72,9 +77,39 @@
   gap: 10px;
 }
 
+.loadError {
+  display: grid;
+  width: min(calc(100% - 28px), 720px);
+  min-height: 70vh;
+  place-content: center;
+  justify-items: start;
+  gap: 16px;
+  margin-inline: auto;
+}
+
+.loadError h1 {
+  max-width: 13ch;
+  font-size: clamp(2.7rem, 7vw, 5rem);
+}
+
+@starting-style {
+  .burst {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
 @media (max-width: 560px) {
   .linkPanel > div {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .burst {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

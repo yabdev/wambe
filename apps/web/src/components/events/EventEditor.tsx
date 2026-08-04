@@ -42,6 +42,16 @@ const VISIBILITIES = [
   ["invite_only", "Invite-only", "Only invited guests can access it. Guest access setup is required before sharing."],
   ["hidden_location", "Hidden location", "Guests see the venue only after access is approved. Guest access setup is required before sharing."],
 ] as const;
+const ERROR_TARGETS: Partial<
+  Record<string, { id: string; label: string; step: number }>
+> = {
+  eventType: { id: "event-type", label: "event type", step: 0 },
+  title: { id: "event-title", label: "event title", step: 0 },
+  startsAt: { id: "starts-at", label: "date and time", step: 0 },
+  venue: { id: "venue-details", label: "venue", step: 1 },
+  media: { id: "media-details", label: "invitation media", step: 2 },
+  visibility: { id: "visibility", label: "privacy", step: 3 },
+};
 
 type Draft = {
   eventType: string;
@@ -150,6 +160,9 @@ export function EventEditor({
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string>();
+  const [saveFailure, setSaveFailure] = useState(false);
+  const [confirmingExit, setConfirmingExit] = useState(false);
   const [creationSessionId, setCreationSessionId] = useState<string>();
   const [eligibility, setEligibility] = useState<
     "eligible_first_time" | "resumed_draft"
@@ -165,6 +178,9 @@ export function EventEditor({
   const saveInFlight = useRef<Promise<Event | null> | null>(null);
   const publishIdempotencyKey = useRef<string | undefined>(undefined);
   const heading = useRef<HTMLHeadingElement>(null);
+  const exitButton = useRef<HTMLButtonElement>(null);
+  const exitDialog = useRef<HTMLDialogElement>(null);
+  const pendingErrorFocus = useRef<string | undefined>(undefined);
   const lastSave = useRef<
     | {
         key: string;
@@ -281,6 +297,19 @@ export function EventEditor({
     return () => window.removeEventListener("beforeunload", protect);
   }, [saveState.phase]);
 
+  useEffect(() => {
+    const targetId = pendingErrorFocus.current;
+    if (!targetId) return;
+    document.getElementById(targetId)?.focus();
+    pendingErrorFocus.current = undefined;
+  }, [step]);
+
+  useEffect(() => {
+    if (confirmingExit && !exitDialog.current?.open) {
+      exitDialog.current?.showModal();
+    }
+  }, [confirmingExit]);
+
   const saveNow = useCallback((): Promise<Event | null> => {
     const currentEvent = eventRef.current;
     if (!currentEvent || saveState.phase === "offline" || !navigator.onLine) {
@@ -302,6 +331,11 @@ export function EventEditor({
       version: currentEvent.version,
     };
     lastSave.current = operation;
+    const markSaveFailure = () => {
+      const offline = !navigator.onLine;
+      setSaveFailure(!offline);
+      dispatchSave({ type: offline ? "OFFLINE" : "SAVE_FAILURE" });
+    };
 
     const task = (async () => {
       try {
@@ -315,6 +349,7 @@ export function EventEditor({
         setEvent(saved);
         lastSave.current = undefined;
         persistedGeneration.current = generation;
+        setSaveFailure(false);
         if (generation === editGeneration.current) {
           const savedDraft = fromEvent(saved);
           draftRef.current = savedDraft;
@@ -357,18 +392,19 @@ export function EventEditor({
             setEvent(latest);
             setDraft(reconciled);
             lastSave.current = undefined;
+            setSaveFailure(false);
             dispatchSave({ type: "CHANGE" });
             setErrors({
               form: [
-                "We refreshed a newer server version. Your local edits are still here; choose Retry to save them.",
+                "We refreshed a newer server version. Your local edits are still here and will save again.",
               ],
             });
           } catch {
-            dispatchSave({ type: "SAVE_FAILURE" });
+            markSaveFailure();
             setErrors({ form: [caught.message] });
           }
         } else {
-          dispatchSave({ type: "SAVE_FAILURE" });
+          markSaveFailure();
         }
         return null;
       } finally {
@@ -389,10 +425,10 @@ export function EventEditor({
   }
 
   useEffect(() => {
-    if (saveState.phase !== "dirty" || !event) return;
+    if (saveState.phase !== "dirty" || !event || confirmingExit) return;
     const timer = setTimeout(() => void saveNow(), 700);
     return () => clearTimeout(timer);
-  }, [event, saveNow, saveState.phase]);
+  }, [confirmingExit, event, saveNow, saveState.phase]);
 
   function change(patch: Partial<Draft>) {
     editGeneration.current += 1;
@@ -416,6 +452,25 @@ export function EventEditor({
     setTimeout(() => heading.current?.focus(), 0);
   }
 
+  function requestExit() {
+    if (["dirty", "saving", "failed", "offline"].includes(saveState.phase)) {
+      setConfirmingExit(true);
+      return;
+    }
+    router.push("/events");
+  }
+
+  function focusError(field: string) {
+    const target = ERROR_TARGETS[field];
+    if (!target) return;
+    if (target.step === step) {
+      document.getElementById(target.id)?.focus();
+      return;
+    }
+    pendingErrorFocus.current = target.id;
+    setStep(target.step);
+  }
+
   async function publish() {
     const clientErrors: Record<string, string[]> = {};
     if (!draft.eventType) clientErrors.eventType = ["Choose an event type."];
@@ -427,16 +482,25 @@ export function EventEditor({
     if (event?.media.some((item) => item.status !== "active"))
       clientErrors.media = ["Wait for media safety checks or remove the file."];
     if (Object.keys(clientErrors).length) {
+      setPublishError(undefined);
       setErrors(clientErrors);
       setStep(clientErrors.visibility ? 3 : clientErrors.venue ? 1 : clientErrors.media ? 2 : 0);
       setTimeout(() => document.getElementById("publish-errors")?.focus(), 0);
       return;
     }
     setPublishing(true);
+    setPublishError(undefined);
     setErrors({});
     const saved = await flushLatest();
     if (!saved) {
       setPublishing(false);
+      setPublishError(
+        "Your latest changes could not be saved. Retry the save, then publish again.",
+      );
+      setTimeout(
+        () => document.getElementById("publish-failure")?.focus(),
+        0,
+      );
       return;
     }
     try {
@@ -466,11 +530,9 @@ export function EventEditor({
         caught instanceof WambeApiError
           ? caught
           : new WambeApiError("Publishing paused. Your draft is safe.");
-      setErrors(
-        Object.keys(apiError.fieldErrors).length
-          ? apiError.fieldErrors
-          : { form: [apiError.message] },
-      );
+      const hasFieldErrors = Object.keys(apiError.fieldErrors).length > 0;
+      setErrors(hasFieldErrors ? apiError.fieldErrors : {});
+      setPublishError(hasFieldErrors ? undefined : apiError.message);
       recordMilestone(
         saved.id,
         creationSessionId,
@@ -479,13 +541,24 @@ export function EventEditor({
         { step: "publish", outcomeCode: apiError.code },
       );
       setPublishing(false);
-      setTimeout(() => document.getElementById("publish-errors")?.focus(), 0);
+      setTimeout(
+        () =>
+          document
+            .getElementById(hasFieldErrors ? "publish-errors" : "publish-failure")
+            ?.focus(),
+        0,
+      );
     }
   }
 
   if (loading) {
     return (
-      <div className={styles.loading} aria-busy="true">
+      <div
+        aria-busy="true"
+        aria-label="Opening your Wambe"
+        className={styles.loading}
+        role="status"
+      >
         <span className="spinner" aria-hidden="true" />
         <p>Opening your Wambe…</p>
       </div>
@@ -494,34 +567,80 @@ export function EventEditor({
 
   if (!event) {
     return (
-      <div className="alert error" role="alert">
-        {errors.form?.[0] ?? "This event is not available."}
-      </div>
+      <section className={styles.loadError} role="alert">
+        <p className="eyebrow">Editor unavailable</p>
+        <h1>We couldn’t open this Wambe.</h1>
+        <p>{errors.form?.[0] ?? "This event is not available."}</p>
+        <button
+          className="button secondary"
+          onClick={() => window.location.reload()}
+          type="button"
+        >
+          Retry
+        </button>
+      </section>
     );
   }
 
   const protectedMode =
     draft.visibility === "invite_only" || draft.visibility === "hidden_location";
+  const saveIsOffline = saveState.phase === "offline";
+  const blockingSave = saveFailure || saveIsOffline;
+  const formOnlyError =
+    Boolean(errors.form) && Object.keys(errors).length === 1;
+  const actionControls = (
+    <>
+      {step > 0 ? (
+        <button
+          className="button secondary"
+          onClick={() => void go(step - 1)}
+          type="button"
+        >
+          Back
+        </button>
+      ) : (
+        <span />
+      )}
+      {step < STEPS.length - 1 ? (
+        <button
+          className="button"
+          onClick={() => void go(step + 1)}
+          type="button"
+        >
+          Continue
+        </button>
+      ) : (
+        <button
+          className="button"
+          disabled={publishing}
+          onClick={() => void publish()}
+          type="button"
+        >
+          {publishing && <span className="spinner" aria-hidden="true" />}
+          {publishing ? "Publishing your Wambe…" : "Publish Wambe"}
+        </button>
+      )}
+    </>
+  );
 
   return (
     <div className={styles.editor}>
       <header className={styles.editorHeader}>
-        <button className="button ghost" onClick={() => router.push("/events")} type="button">
+        <button
+          className="button ghost"
+          onClick={requestExit}
+          ref={exitButton}
+          type="button"
+        >
           ← Exit
         </button>
-        <div className={styles.saveStatus} data-phase={saveState.phase} aria-live="polite">
-          <span aria-hidden="true">●</span> {saveState.message}
-          {saveState.phase === "failed" && (
-            <button onClick={() => void saveNow()} type="button">Retry</button>
-          )}
+        <div className={styles.saveStatus} data-phase={saveState.phase}>
+          <span aria-hidden="true" className={styles.saveDot}>●</span>
+          <span aria-atomic="true" aria-live={blockingSave ? "off" : "polite"}>
+            {saveState.message}
+          </span>
         </div>
       </header>
-
-      {saveState.phase === "offline" && (
-        <div className="alert" role="status">
-          You’re offline. Keep going—these changes will save when you reconnect.
-        </div>
-      )}
 
       <div className={styles.workspace}>
         <section className={`card ${styles.formCard}`}>
@@ -542,6 +661,34 @@ export function EventEditor({
             </div>
           </div>
 
+          {blockingSave && (
+            <div
+              className={styles.inlineFeedback}
+              data-kind={saveIsOffline ? "offline" : "failed"}
+              role={saveIsOffline ? "status" : "alert"}
+            >
+              <div>
+                <strong>
+                  {saveIsOffline ? "You’re offline" : "Save failed"}
+                </strong>
+                <p>
+                  {saveIsOffline
+                    ? "Keep this page open. Your changes will save when you reconnect."
+                    : "Your draft is still here. Try saving again when you’re ready."}
+                </p>
+              </div>
+              {saveFailure && !saveIsOffline && (
+                <button
+                  className="button secondary"
+                  onClick={() => void saveNow()}
+                  type="button"
+                >
+                  Retry save
+                </button>
+              )}
+            </div>
+          )}
+
           {Object.keys(errors).length > 0 && (
             <div
               className="alert error"
@@ -549,10 +696,28 @@ export function EventEditor({
               role="alert"
               tabIndex={-1}
             >
-              <strong>Review these details</strong>
+              <strong>
+                {formOnlyError ? "Save needs attention" : "Review these details"}
+              </strong>
               <ul>
                 {Object.entries(errors).flatMap(([field, messages]) =>
-                  messages.map((message) => <li key={`${field}-${message}`}>{message}</li>),
+                  messages.map((message) => {
+                    const target = ERROR_TARGETS[field];
+                    return (
+                      <li key={`${field}-${message}`}>
+                        <span>{message}</span>
+                        {target && (
+                          <button
+                            aria-label={`Edit ${target.label}`}
+                            onClick={() => focusError(field)}
+                            type="button"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </li>
+                    );
+                  }),
                 )}
               </ul>
             </div>
@@ -568,7 +733,11 @@ export function EventEditor({
 
             {step === 0 && (
               <div className={styles.fields}>
-                <fieldset className={styles.choiceFieldset}>
+                <fieldset
+                  className={styles.choiceFieldset}
+                  id="event-type"
+                  tabIndex={-1}
+                >
                   <legend>What are you celebrating?</legend>
                   <div className={styles.choiceGrid}>
                     {EVENT_TYPES.map(([value, label, description]) => (
@@ -616,15 +785,17 @@ export function EventEditor({
             )}
 
             {step === 1 && (
-              <VenuePicker
-                error={errors.venue?.[0]}
-                onChange={(venue) => change({ venue })}
-                value={draft.venue}
-              />
+              <div id="venue-details" tabIndex={-1}>
+                <VenuePicker
+                  error={errors.venue?.[0]}
+                  onChange={(venue) => change({ venue })}
+                  value={draft.venue}
+                />
+              </div>
             )}
 
             {step === 2 && (
-              <div className={styles.fields}>
+              <div className={styles.fields} id="media-details" tabIndex={-1}>
                 <MediaUploader
                   eventId={event.id}
                   media={event.media}
@@ -650,7 +821,11 @@ export function EventEditor({
 
             {step === 3 && (
               <div className={styles.fields}>
-                <fieldset className={styles.choiceFieldset}>
+                <fieldset
+                  className={styles.choiceFieldset}
+                  id="visibility"
+                  tabIndex={-1}
+                >
                   <legend className="sr-only">Choose who can see this event</legend>
                   <div className={styles.visibilityList}>
                     {VISIBILITIES.map(([value, label, description]) => (
@@ -690,21 +865,35 @@ export function EventEditor({
             )}
           </div>
 
-          <footer className={styles.actions}>
-            {step > 0 ? (
-              <button className="button secondary" onClick={() => void go(step - 1)} type="button">Back</button>
-            ) : (
-              <span />
+          <footer
+            className={styles.actions}
+            data-has-feedback={Boolean(publishError)}
+          >
+            {publishError && (
+              <div
+                className={styles.actionFailure}
+                id="publish-failure"
+                role="alert"
+                tabIndex={-1}
+              >
+                <div>
+                  <strong>Publishing paused</strong>
+                  <p>{publishError}</p>
+                </div>
+                <button
+                  className="button secondary"
+                  disabled={publishing}
+                  onClick={() => void publish()}
+                  type="button"
+                >
+                  Try publishing again
+                </button>
+              </div>
             )}
-            {step < STEPS.length - 1 ? (
-              <button className="button" onClick={() => void go(step + 1)} type="button">
-                Continue
-              </button>
+            {publishError ? (
+              <div className={styles.actionButtons}>{actionControls}</div>
             ) : (
-              <button className="button" disabled={publishing} onClick={() => void publish()} type="button">
-                {publishing && <span className="spinner" aria-hidden="true" />}
-                {publishing ? "Publishing your Wambe…" : "Publish Wambe"}
-              </button>
+              actionControls
             )}
           </footer>
         </section>
@@ -722,6 +911,43 @@ export function EventEditor({
           </div>
         </aside>
       </div>
+
+      {confirmingExit && (
+        <dialog
+          aria-describedby="leave-editor-description"
+          aria-labelledby="leave-editor-title"
+          className={styles.dialog}
+          onClose={() => {
+            setConfirmingExit(false);
+            exitButton.current?.focus();
+          }}
+          ref={exitDialog}
+        >
+          <form method="dialog">
+            <p className="eyebrow">Unsaved changes</p>
+            <h2 id="leave-editor-title">Leave this Wambe?</h2>
+            <p id="leave-editor-description">
+              Unsaved changes remain. A save already in progress may still finish before
+              you leave.
+            </p>
+            <div>
+              <button autoFocus className="button secondary" type="submit">
+                Keep editing
+              </button>
+              <button
+                className="button danger"
+                onClick={() => {
+                  exitDialog.current?.close();
+                  router.push("/events");
+                }}
+                type="button"
+              >
+                Leave
+              </button>
+            </div>
+          </form>
+        </dialog>
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@
   position: relative;
   display: grid;
   width: min(100%, 720px);
-  min-height: min(88vh, 820px);
+  min-height: min(88svh, 820px);
   place-content: center;
   justify-items: center;
   gap: 22px;
@@ -86,4 +86,79 @@
 .invitation footer strong {
   color: var(--ink);
   font-size: 1.2rem;
+}
+
+.message h1 {
+  max-width: 13ch;
+  font-size: clamp(2.7rem, 9vw, 5.2rem);
+}
+
+.messageCopy {
+  z-index: 1;
+  max-width: 42ch;
+  color: var(--muted);
+}
+
+.messageActions {
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.loadingInvitation {
+  grid-template-rows: auto auto auto auto auto 1fr auto;
+}
+
+.skeletonTitle,
+.skeletonDetail,
+.skeletonDetailShort {
+  z-index: 1;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.skeletonTitle {
+  width: min(80%, 430px);
+  height: clamp(3.2rem, 11vw, 6rem);
+  border-radius: var(--radius-sm);
+}
+
+.skeletonDetail {
+  width: min(68%, 310px);
+  height: 18px;
+}
+
+.skeletonDetailShort {
+  width: min(48%, 220px);
+  height: 18px;
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 12px;
+  }
+
+  .invitation {
+    min-height: calc(100svh - 24px);
+    padding-inline: 24px;
+  }
+
+  .messageActions {
+    width: 100%;
+  }
+
+  .messageActions :global(.button) {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .skeletonTitle,
+  .skeletonDetail,
+  .skeletonDetailShort {
+    border: 1px solid CanvasText;
+  }
 }

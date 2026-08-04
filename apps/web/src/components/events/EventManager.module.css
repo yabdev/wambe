@@ -84,6 +84,16 @@
   border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity var(--motion-dialog) var(--ease-out-strong),
+    transform var(--motion-dialog) var(--ease-out-strong);
+}
+
+.dialog[open] {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .dialog::backdrop {
@@ -119,6 +129,26 @@
   gap: 10px;
 }
 
+.loadError {
+  display: grid;
+  min-height: 70vh;
+  place-content: center;
+  justify-items: start;
+  gap: 16px;
+}
+
+.loadError h1 {
+  max-width: 12ch;
+  font-size: clamp(2.7rem, 7vw, 5rem);
+}
+
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
 @media (min-width: 900px) {
   .grid {
     grid-template-columns: minmax(0, 1fr) 330px;
@@ -134,5 +164,14 @@
   .dialog form > div {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog,
+  .dialog[open] {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

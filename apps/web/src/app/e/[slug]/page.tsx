@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicMetadata } from "@/lib/api/public-api";
+import { GuestRetry } from "./GuestRetry";
 import styles from "./page.module.css";
+
+const unavailableMetadata: Metadata = {
+  title: "Event unavailable",
+  robots: { index: false, follow: false },
+};
 
 export async function generateMetadata({
   params,
@@ -9,8 +15,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const event = await getPublicMetadata(slug);
-  if (!event) return { title: "Event unavailable" };
+  const result = await getPublicMetadata(slug);
+  if (result.kind !== "available") return unavailableMetadata;
+  const { metadata: event } = result;
   return {
     title: event.title,
     description: `Join us for ${event.title} on ${event.startsAt.toLocaleDateString("en-NG", { dateStyle: "long" })}.`,
@@ -31,8 +38,12 @@ export default async function PublicEventPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const event = await getPublicMetadata(slug);
-  if (!event) notFound();
+  const result = await getPublicMetadata(slug);
+  if (result.kind === "unavailable") notFound();
+  if (result.kind === "retryable") {
+    return <GuestRetry />;
+  }
+  const { metadata: event } = result;
   return (
     <main id="main" className={styles.page}>
       <article className={styles.invitation}>
