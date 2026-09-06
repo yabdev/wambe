@@ -20,9 +20,20 @@ All checks were re-run locally on `main` at `0873a08`:
 Only documentation, CI wiring and provisioning scripts changed after `0873a08`; no
 application code moved, so that baseline still describes the release candidate.
 
-## Status (2026-09-06)
+## Status (2026-09-07)
 
 Done:
+
+- **Release candidate `6c7b4c8`, tag `v0.1.0-rc.1`, has green `CI` (run
+  `34065688926`, `BUILD-001`) and green `Security` with `NVD_API_KEY` configured
+  (run `34065695840`, `BUILD-002`: Gitleaks, both npm audits, both NVD-backed
+  dependency-checks).** Reaching it required marking `mvnw` executable in git,
+  Next.js 16.2.10 → 16.3.4 plus `npm audit fix`, and Spring Boot 4.1.0 → 4.1.1 with
+  Tomcat 11.0.25 to clear CVSS 7+ advisories in Spring Framework, Spring Security,
+  Tomcat and the PostgreSQL driver. Dispatch later workflows against the tag so
+  documentation commits do not move the release SHA.
+- The GitHub account billing lock that blocked every Actions job on 2026-09-06 was
+  cleared by adding a payment method; GitHub retried the charge automatically.
 
 - `gh` is authenticated as `yabdev`; `yabdev/wambe` exists and `main` is pushed.
   Local and `origin/main` are in sync. The repository has been public since
@@ -36,38 +47,21 @@ Done:
   `infra/supabase/README.md` + `01-app-roles.sql`, `infra/gcp/bootstrap-project.sh`,
   `infra/gcp/deploy-cloud-run.sh`.
 
-Blocked on founder action, in order:
+Blocked on founder action:
 
-1. **The `yabdev` GitHub account is locked for billing, so no Actions job can
-   start.** While the repository was private, every run since 2026-09-03 ended in
-   `startup_failure` with zero jobs. The Product Owner made the repository public
-   on 2026-09-06; jobs are now created but each fails with the annotation "The job
-   was not started because your account is locked due to a billing issue"
-   (`Security` run `34050843613`). Public visibility does not lift an account
-   lock. Fix: https://github.com/settings/billing, settle the outstanding balance
-   or update the payment method, then run
-   `gh workflow run ci.yml --repo yabdev/wambe --ref main`. Fallback, a Product
-   Owner decision because `yabdev/wambe` is the canonical home hard-coded in the
-   evidence checker, the v1.1 example and the WIF attribute condition: transfer the
-   repository to an unlocked account or organisation and update those references.
-   Until one of these is done, `BUILD-001`, `BUILD-002` and `release-images.yml`
-   are impossible.
-2. `NVD_API_KEY` is not set (`gh secret list` is empty); the `Security` workflow's
-   Java job fails by design without it.
-3. No Supabase, Google Cloud or Vercel project exists. `gcloud`, `vercel` and
+1. No Supabase, Google Cloud or Vercel project exists. `gcloud`, `vercel` and
    `supabase` CLIs are not installed on the founder machine; Google Cloud Shell has
    `gcloud` and `gh` preinstalled and runs the scripts as-is.
 
-## Phase 1 — GitHub release baseline
+## Phase 1 — GitHub release baseline (done 2026-09-07)
 
-1. Clear the account billing lock above, then run CI on the release SHA:
-   `gh workflow run ci.yml --repo yabdev/wambe --ref main` (`CI` has a
-   `workflow_dispatch` trigger so a SHA can be re-verified without a new push).
-   Confirm it is green (`BUILD-001`).
-2. Request a free NVD API key (https://nvd.nist.gov/developers/request-an-api-key)
-   and set it: `gh secret set NVD_API_KEY --repo yabdev/wambe`.
-3. Manually dispatch `Security` on the same SHA and confirm it is green
-   (`BUILD-002`): `gh workflow run security.yml --repo yabdev/wambe --ref main`.
+`CI` and `Security` are green on `v0.1.0-rc.1`. If the release candidate moves to a
+new commit, repeat on that commit and re-tag:
+
+1. `gh workflow run ci.yml --repo yabdev/wambe --ref <branch-or-tag>` (`BUILD-001`).
+2. `gh workflow run security.yml --repo yabdev/wambe --ref <branch-or-tag>`
+   (`BUILD-002`); `NVD_API_KEY` is configured as a repository secret.
+3. `git tag -a v0.1.0-rc.<n> <sha>` and push the tag.
 4. Optional but recommended: enable required reviewers on the `staging`
    environment so image publication needs an explicit approval.
 
@@ -93,8 +87,8 @@ limits that need Product Owner decisions (no PITR, project pausing, SMTP limits)
    Workload Identity Federation limited to `yabdev/wambe`, the Secret Manager secrets
    (the scanner HMAC is generated; Supabase values are prompted), and sets the
    `GCP_*` variables on the GitHub `staging` environment.
-3. Dispatch `Release images` on the release SHA
-   (`gh workflow run release-images.yml --repo yabdev/wambe --ref main`), then
+3. Dispatch `Release images` on the release tag
+   (`gh workflow run release-images.yml --repo yabdev/wambe --ref v0.1.0-rc.1`), then
    download `release-images-staging-<sha>` and read `apiImageDigest` and
    `scannerImageDigest` (`BUILD-003`/`BUILD-004`).
 4. Deploy, scanner first, with confirmation at each step:
