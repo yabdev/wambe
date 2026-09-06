@@ -37,6 +37,17 @@ jobs:
           -c ajv-formats
           -s docs/sdlc/stories/US-003-secure-us-002-staging-release/STAGING_EVIDENCE_SCHEMA.json
           -d docs/sdlc/stories/US-003-secure-us-002-staging-release/STAGING_EVIDENCE.example.json
+      - name: Validate staging evidence v1.1 template
+        run: >
+          npx --yes
+          --package ajv-cli@5.0.0
+          --package ajv-formats@3.0.1
+          ajv validate
+          --spec=draft2020
+          --strict=false
+          -c ajv-formats
+          -s docs/sdlc/stories/US-004-complete-staging-release-controls/contracts/staging-evidence-v1.1.schema.json
+          -d docs/sdlc/stories/US-004-complete-staging-release-controls/contracts/staging-evidence-v1.1.example.json
       - name: Check staging evidence control mapping
         run: node scripts/check-staging-evidence-template.mjs
       - name: Build generated client

@@ -100,6 +100,6 @@ spec:
             - name: SCANNER_AUDIENCE
               value: PRIVATE_SCANNER_ORIGIN
             - name: SCHEDULER_SUBJECT
-              value: SCHEDULER_SERVICE_ACCOUNT
+              value: SCHEDULER_SERVICE_ACCOUNT_UNIQUE_ID
             - name: SCHEDULER_AUDIENCE
               value: API_ORIGIN

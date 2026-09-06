@@ -114,6 +114,11 @@ if (-not (Test-ExactHttpsOrigin $cors) -or $cors -match "localhost|127\.0\.0\.1|
     $invalid.Add("CORS_ALLOWED_ORIGINS must contain only exact deployed HTTPS origins")
 }
 
+$schedulerSubject = [Environment]::GetEnvironmentVariable("SCHEDULER_SUBJECT")
+if (-not [string]::IsNullOrWhiteSpace($schedulerSubject) -and $schedulerSubject -notmatch "^[0-9]+$") {
+    $invalid.Add("SCHEDULER_SUBJECT must be the Scheduler service account numeric uniqueId (the Google ID token sub claim), not its email")
+}
+
 if ($missing.Count -gt 0) {
     Write-Error "$Environment is missing required variables: $($missing -join ', ')"
 }

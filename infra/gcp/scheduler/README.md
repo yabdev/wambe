@@ -4,6 +4,11 @@ Create these jobs only after the API is deployed and the dedicated Scheduler ser
 account has Cloud Run invoker permission. The API validates Google issuer, exact
 audience, and exact service-account subject. Do not set `INTERNAL_JOB_KEY`.
 
+The API's `SCHEDULER_SUBJECT` must be the service account's numeric `uniqueId`
+(`gcloud iam service-accounts describe "${SCHEDULER_SERVICE_ACCOUNT}" --format='value(uniqueId)'`):
+Google ID tokens carry that ID in `sub` and the email only in `email`, so configuring
+the email rejects every job with an invalid-subject error.
+
 Suggested pilot schedules:
 
 - scan dispatch: every minute, UTC

@@ -8,6 +8,10 @@ command.
 ## Required substitutions
 
 - `PROJECT_ID`, `REGION`, `API_SERVICE_ACCOUNT`, `SCANNER_SERVICE_ACCOUNT`
+- `SCHEDULER_SERVICE_ACCOUNT_UNIQUE_ID`: the Scheduler service account's numeric `uniqueId`
+  (`gcloud iam service-accounts describe <email> --format='value(uniqueId)'`). The API
+  compares `SCHEDULER_SUBJECT` with the Google ID token `sub` claim, which carries that
+  ID; the email only appears in the `email` claim.
 - immutable `API_IMAGE_DIGEST` and `SCANNER_IMAGE_DIGEST`
 - exact frontend/API URLs and Supabase issuer/JWKS/storage values
 - Secret Manager secret names and versions

@@ -13,15 +13,16 @@ implementation:
     - ../US-002-create-publish-event/contracts/product-events-v1.schema.json
     - contracts/staging-evidence-v1.1.schema.json
 handoff:
-  summary: Product Owner approved backend implementation and authenticated yabdev access to the private yabdev/wambe repository is confirmed with push and workflow scope; QA remains blocked until the exact-SHA release and isolated staging activation checkpoint is complete
+  summary: The release candidate is pushed to yabdev/wambe main (2026-09-06), the staging GitHub environment exists, CI validates the v1.1 evidence example, and staging provisioning is scripted under infra/gcp and infra/supabase; QA remains blocked because GitHub Actions fails at startup for every run on the private repository and no staging provider resources exist yet
   blockers:
-    - "No authenticated staging provider control plane or NVD-backed evidence source is established; requirements must preserve these as access dependencies"
+    - "GitHub Actions on yabdev/wambe ends every run in startup_failure with zero jobs (push CI run 34047583232, manual Security run 34047686435, all Dependabot runs since 2026-09-03); this is an account/billing-level block the founder must clear (or the Product Owner must decide to make the repository public) before BUILD-001, BUILD-002 or release-images.yml can produce evidence"
+    - "NVD_API_KEY is not configured; the Security workflow fails by design without it"
+    - "No authenticated staging provider control plane exists (no Supabase, GCP or Vercel project); infra/gcp/bootstrap-project.sh, infra/gcp/deploy-cloud-run.sh and infra/supabase/README.md script the activation once the founder creates the accounts"
     - "OSV-Scanner 2.4.0 reports CVE-2026-54515 against patched jackson-databind 2.21.5 because the current OSV record contains conflicting open-ended Maven ranges; upstream FasterXML and NVD identify 2.21.5 as fixed, so AC-004 remains unproven pending corrected feed data and independent Security adjudication"
-    - "The expanded Node policy checker is already invoked by CI, but explicit AJV validation of the v1.1 example was only run locally; delivery ownership must add or confirm the v1.1 AJV workflow step before the exact-SHA gate"
     - "OPS-007 requires a backup staging/on-call contact recorded outside the repository or a later explicit Product Owner waiver"
     - "Private scanner routing, Supabase restore/PITR, telemetry/alerting and provider quota capabilities need current free-tier evidence; any paid gap requires a focused Product Owner purchase-or-waive decision"
     - "After backend approval and before QA starts, the founder/operator must activate the isolated staging target through authenticated provider tooling so QA and Security can obtain deployed evidence before the later Operations audit"
-  next_action: Create and push the reviewed release-candidate commit, then complete exact-SHA CI/Security, canonical image publication and isolated staging activation before invoking /persona-qa US-004
+  next_action: Founder clears the GitHub Actions startup block and sets NVD_API_KEY, reruns CI and Security on the release SHA, then follows docs/operations/mvp-launch-runbook.md Phases 2-4 (Supabase, bootstrap-project.sh, Release images, deploy-cloud-run.sh, Vercel) before invoking /persona-qa US-004
 gates:
   intake: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#intake" }
   requirements: { status: APPROVED, updated: "2026-07-16", artifact: "ARTIFACTS.md#requirements" }
