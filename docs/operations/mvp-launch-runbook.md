@@ -24,8 +24,10 @@ application code moved, so that baseline still describes the release candidate.
 
 Done:
 
-- `gh` is authenticated as `yabdev`; `yabdev/wambe` exists (private) and `main` is
-  pushed. Local and `origin/main` are in sync.
+- `gh` is authenticated as `yabdev`; `yabdev/wambe` exists and `main` is pushed.
+  Local and `origin/main` are in sync. The repository has been public since
+  2026-09-06 by Product Owner decision, so the founder product paper PDF and all
+  SDLC artifacts are public; keep anything confidential out of the repository.
 - The `staging` GitHub environment exists (variables are populated by
   `infra/gcp/bootstrap-project.sh`).
 - CI validates the v1.1 staging-evidence example against its schema, closing the
@@ -36,27 +38,32 @@ Done:
 
 Blocked on founder action, in order:
 
-1. **GitHub Actions cannot start on `yabdev/wambe`.** Every run since 2026-09-03 —
-   the push CI run for `7c8b692` (run `34047583232`), a manual `Security` dispatch
-   (run `34047686435`) and every Dependabot run — ends in `startup_failure` within
-   two seconds with zero jobs created. That pattern is an account-level block on
-   private-repository Actions (billing lock, missing payment verification or a
-   spending limit), not a workflow defect: the same files ran locally and the
-   Dependabot workflow has no file at all. Open the run page for the exact message,
-   then check https://github.com/settings/billing (payment method, spending limit,
-   included minutes). The alternative is making the repository public, which is a
-   Product Owner decision. Until this is fixed, `BUILD-001`, `BUILD-002` and
-   `release-images.yml` are impossible.
-2. `NVD_API_KEY` is not set (`gh secret list` is empty); the `Security` workflow
-   fails by design without it.
+1. **The `yabdev` GitHub account is locked for billing, so no Actions job can
+   start.** While the repository was private, every run since 2026-09-03 ended in
+   `startup_failure` with zero jobs. The Product Owner made the repository public
+   on 2026-09-06; jobs are now created but each fails with the annotation "The job
+   was not started because your account is locked due to a billing issue"
+   (`Security` run `34050843613`). Public visibility does not lift an account
+   lock. Fix: https://github.com/settings/billing, settle the outstanding balance
+   or update the payment method, then run
+   `gh workflow run ci.yml --repo yabdev/wambe --ref main`. Fallback, a Product
+   Owner decision because `yabdev/wambe` is the canonical home hard-coded in the
+   evidence checker, the v1.1 example and the WIF attribute condition: transfer the
+   repository to an unlocked account or organisation and update those references.
+   Until one of these is done, `BUILD-001`, `BUILD-002` and `release-images.yml`
+   are impossible.
+2. `NVD_API_KEY` is not set (`gh secret list` is empty); the `Security` workflow's
+   Java job fails by design without it.
 3. No Supabase, Google Cloud or Vercel project exists. `gcloud`, `vercel` and
    `supabase` CLIs are not installed on the founder machine; Google Cloud Shell has
    `gcloud` and `gh` preinstalled and runs the scripts as-is.
 
 ## Phase 1 — GitHub release baseline
 
-1. Resolve the Actions startup block above, then re-run CI on the release SHA
-   (`gh run rerun <id>` or push). Confirm it is green (`BUILD-001`).
+1. Clear the account billing lock above, then run CI on the release SHA:
+   `gh workflow run ci.yml --repo yabdev/wambe --ref main` (`CI` has a
+   `workflow_dispatch` trigger so a SHA can be re-verified without a new push).
+   Confirm it is green (`BUILD-001`).
 2. Request a free NVD API key (https://nvd.nist.gov/developers/request-an-api-key)
    and set it: `gh secret set NVD_API_KEY --repo yabdev/wambe`.
 3. Manually dispatch `Security` on the same SHA and confirm it is green
@@ -153,7 +160,6 @@ reuses the shape, never the resources:
 
 ## Open decisions for the Product Owner
 
-- GitHub Actions block: fix billing on the `yabdev` account or make the repo public.
 - Vercel Hobby vs Pro for staging/production.
 - Which of the 42 staging controls to waive for MVP (likely candidates on free tiers:
   `RECOVERY-007` Supabase restore drill, `OPS-004` provider quota alerts, `OPS-007`
