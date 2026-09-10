@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Require green CI and Security on this commit
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const requiredWorkflows = ["ci.yml", "security.yml"];
