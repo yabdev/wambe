@@ -48,7 +48,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Build and publish API
         id: build-api
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: services/wambe-api/Dockerfile
@@ -61,7 +61,7 @@ jobs:
           sbom: true
       - name: Build and publish scanner
         id: build-scanner
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: services/media-scanner/Dockerfile
